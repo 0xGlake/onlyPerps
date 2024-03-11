@@ -46,10 +46,3 @@ export async function getRabbitX(tickers: string[]): Promise<{ [key: string]: { 
   return filteredMarkets;
 
 }
-
-getRabbitX(['BTC', 'ETH', 'SOL']).then(data => {
-    console.log(data);
-  })
-  .catch(error => {
-    console.error('Error fetching market data:', error);
-  });

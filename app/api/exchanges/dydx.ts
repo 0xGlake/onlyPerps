@@ -31,10 +31,3 @@ export async function getDyDx(tickers: string[]): Promise<{ [key: string]: { fun
     return acc;
   }, {});
 }
-
-getDyDx(['BTC', 'ETH', 'SOL']).then(data => {
-    console.log(data);
-  })
-  .catch(error => {
-    console.error('Error fetching market data:', error);
-  });

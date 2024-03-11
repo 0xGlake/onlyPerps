@@ -46,10 +46,3 @@ export async function getVertex(tickers: string[]): Promise<{ [key: string]: { f
 
   return result;
 }
-
-// Example usage
-getVertex(['BNB', 'DOGE', 'MEME']).then(data => {
-  console.log(data);
-}).catch(error => {
-  console.error('Error fetching market data:', error);
-});

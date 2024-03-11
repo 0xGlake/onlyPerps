@@ -42,12 +42,3 @@ export async function getAevo(tickers: string[]): Promise<{ [key: string]: { fun
 
   return result;
 }
-
-getAevo(['ETH', 'BTC', 'SOL']).then(data => {
-    console.log(data);
-  }).catch(error => {
-    console.error('Error fetching market data:', error);
-  });
-
-
-
