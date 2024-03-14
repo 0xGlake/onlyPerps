@@ -96,4 +96,3 @@ function handler(event, context) {
     });
 }
 exports.handler = handler;
-handler({}, {});
