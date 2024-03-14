@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
   try {
-    const { rows } = await pool.query('SELECT * FROM onlyperps LIMIT 10');
+    const { rows } = await pool.query('SELECT * FROM onlyperps LIMIT 20');
     return NextResponse.json(rows);
   } catch (error) {
     console.error('Error fetching data from Neon:', error);
