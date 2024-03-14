@@ -8,6 +8,8 @@ uses AWS lambda and EventBridge
 npx ts-node main.ts
 ```
 
+create a .env with CONNECTION_STRING
+
 ## Prep Lambda
 
 ```bash
