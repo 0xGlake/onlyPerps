@@ -92,17 +92,17 @@ const FundingRateHeatMap = ({ data }) => {
       .append('g')
       .call(d3.axisLeft(yScale).tickFormat((d) => d.split('-').join(' ')));
 
-    const timestamps = data.map((d) => new Date(d.timestamp));
+      const timestamps = data.slice().reverse().map((d) => new Date(d.timestamp));
 
-    const xScale = d3
-      .scaleTime()
-      .range([0, width])
-      .domain(d3.extent(timestamps) as [Date, Date]);
-
-    svg
-      .append('g')
-      .attr('transform', `translate(0,${height})`)
-      .call(d3.axisBottom(xScale));
+      const xScale = d3
+        .scaleTime()
+        .range([0, width])
+        .domain(d3.extent(timestamps) as [Date, Date]);
+      
+      svg
+        .append('g')
+        .attr('transform', `translate(0,${height})`)
+        .call(d3.axisBottom(xScale));
 
     const fundingRates = data.flatMap((d) =>
       exchanges.flatMap((exchange) =>
@@ -121,7 +121,7 @@ const FundingRateHeatMap = ({ data }) => {
 
     svg
       .selectAll('.cell')
-      .data(data)
+      .data(data.slice().reverse())
       .join('g')
       .attr('transform', (d, i) => `translate(${i * cellWidth}, 0)`)
       .selectAll('.cell-rect')
