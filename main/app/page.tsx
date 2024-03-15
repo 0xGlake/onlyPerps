@@ -1,4 +1,5 @@
 import FundingRateHeatMap from '../app/components/FundingRateHeatMap';
+import OpenInterestChart from '../app/components/OpenInterestStackedChart';
 
 type FundingRateData = {
   [key: string]: {
@@ -21,6 +22,9 @@ export default async function Home() {
     <div>
       <h1>Funding Rate Heat Map</h1>
       <FundingRateHeatMap data={data} />
+
+      <h1>Open Interest Stacked Chart</h1>
+      <OpenInterestChart data={data} />
     </div>
   );
 }

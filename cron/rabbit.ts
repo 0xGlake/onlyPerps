@@ -6,6 +6,8 @@ interface RabbitMarket {
   market_title: string;
   icon_url: string;
   open_interest: string;
+  fair_price: string;
+  index_price: string;
 }
 
 export async function getRabbitX(tickers: string[]): Promise<{ [key: string]: { fundingRate: string, openInterest: string } }> {
