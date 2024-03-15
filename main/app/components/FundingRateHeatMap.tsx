@@ -1,7 +1,20 @@
 "use client";
-
-import { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
+
+type TooltipProps = {
+  show: boolean;
+  content: {
+    exchange: string;
+    asset: string;
+    value: number;
+    timestamp: string;
+  };
+  position: {
+    x: number;
+    y: number;
+  };
+};
 
 type FundingRateData = {
   [key: string]: {
@@ -12,22 +25,45 @@ type FundingRateData = {
   };
 };
 
-type Props = {
-  data: {
-    id: number;
-    timestamp: string;
-    [key: string]: FundingRateData | number | string;
-  }[];
+// Define a simple Tooltip component
+const Tooltip: React.FC<TooltipProps> = ({ show, content, position }) => {
+  if (!show) return null;
+
+  const style = {
+    position: 'absolute',
+    left: `${position.x}px`,
+    top: `${position.y}px`,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    color: '#fff',
+    padding: '8px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    pointerEvents: 'none',
+  };
+
+  return (
+    <div style={style}>
+      <div><strong>Exchange:</strong> {content.exchange}</div>
+      <div><strong>Asset:</strong> {content.asset}</div>
+      <div><strong>Funding Rate:</strong> {content.value}</div>
+      <div><strong>Time:</strong> {content.timestamp}</div>
+    </div>
+  );
 };
 
-const FundingRateHeatMap: React.FC<Props> = ({ data }) => {
-  const svgRef = useRef<SVGSVGElement>(null);
+const FundingRateHeatMap = ({ data }) => {
+  const svgRef = useRef(null);
+  const [tooltipData, setTooltipData] = useState({
+    show: false,
+    content: {},
+    position: { x: 0, y: 0 },
+  });
 
   useEffect(() => {
     if (!data || data.length === 0) return;
 
-    const margin = { top: 20, right: 20, bottom: 20, left: 100 };
-    const width = 800 - margin.left - margin.right;
+    const margin = { top: 20, right: 20, bottom: 20, left: 130 };
+    const width = 1200 - margin.left - margin.right;
     const height = 400 - margin.top - margin.bottom;
 
     const svg = d3
@@ -70,7 +106,9 @@ const FundingRateHeatMap: React.FC<Props> = ({ data }) => {
 
     const fundingRates = data.flatMap((d) =>
       exchanges.flatMap((exchange) =>
-        assets.map((asset) => parseFloat(d[exchange][asset].fundingRate ))
+        assets.map((asset) =>
+          parseFloat((d[exchange] as FundingRateData)[asset].fundingRate)
+        )
       )
     );
 
@@ -92,7 +130,8 @@ const FundingRateHeatMap: React.FC<Props> = ({ data }) => {
           assets.map((asset) => ({
             exchange,
             asset,
-            value: parseFloat(d[exchange][asset].fundingRate),
+            value: parseFloat((d[exchange] as FundingRateData)[asset].fundingRate),
+            timestamp: d.timestamp,
           }))
         )
       )
@@ -101,10 +140,43 @@ const FundingRateHeatMap: React.FC<Props> = ({ data }) => {
       .attr('y', (d) => yScale(`${d.asset}-${d.exchange}`)!)
       .attr('width', cellWidth)
       .attr('height', cellHeight)
-      .attr('fill', (d) => colorScale(d.value));
+      .attr('fill', (d) => colorScale(d.value))
+      .on('mouseover', (event, d) => {
+        const svgRect = svg.node().getBoundingClientRect();
+        setTooltipData({
+          show: true,
+          content: d,
+          position: {
+            x: event.clientX - svgRect.left,
+            y: event.clientY - svgRect.top,
+          },
+        });
+      })
+      .on('mousemove', (event) => {
+        const svgRect = svg.node().getBoundingClientRect();
+        setTooltipData((prev) => ({
+          ...prev,
+          position: {
+            x: event.clientX - svgRect.left,
+            y: event.clientY - svgRect.top,
+          },
+        }));
+      })
+      .on('mouseout', () =>
+        setTooltipData({ show: false, content: {}, position: { x: 0, y: 0 } })
+      );
   }, [data]);
 
-  return <svg ref={svgRef} />;
+  return (
+    <>
+      <svg ref={svgRef} />
+      <Tooltip
+        show={tooltipData.show}
+        content={tooltipData.content}
+        position={tooltipData.position}
+      />
+    </>
+  );
 };
 
 export default FundingRateHeatMap;
