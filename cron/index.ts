@@ -64,7 +64,6 @@ async function storeData(data: ExchangeData) {
 
   try {
     await client.query(query, values);
-    console.log('heeeeeeeeere');
   } catch (err) {
     console.error('Error storing data:', err);
   }

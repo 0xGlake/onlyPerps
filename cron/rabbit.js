@@ -41,4 +41,3 @@ function getRabbitX(tickers) {
     });
 }
 exports.getRabbitX = getRabbitX;
-getRabbitX(["BTC", "ETH", "SOL"]).then(console.log);

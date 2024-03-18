@@ -17,27 +17,44 @@ interface AevoMarketData {
   funding_rate: string;
 }
 
-export async function getAevo(tickers: string[]): Promise<{ [key: string]: { fundingRate: string; openInterest: string;} }> {
-  const result: { [key: string]: { fundingRate: string; openInterest: string;} } = {};
+export async function getAevo(tickers: string[], maxRetries = 3, retryDelay = 1000): Promise<{ [key: string]: { fundingRate: string; openInterest: string; } }> {
+  const result: { [key: string]: { fundingRate: string; openInterest: string; } } = {};
 
   for (const ticker of tickers) {
-    const url = `https://api.aevo.xyz/instrument/${ticker}-PERP`;
-    const response = await fetch(url, {
-      headers: {
-        'accept': 'application/json'
-      }
-    });
+    let retries = 0;
+    let data: AevoMarketData | null = null;
 
-    if (!response.ok) {
-      throw new Error(`HTTP error ${response.status}`);
+    while (retries < maxRetries) {
+      const url = `https://api.aevo.xyz/instrument/${ticker}-PERP`;
+      const response = await fetch(url, {
+        headers: {
+          'accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+
+      data = await response.json();
+
+      if (data !== null && data.funding_rate !== null && data.markets.total_oi !== null) {
+        break;
+      }
+
+      retries++;
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
     }
 
-    const data: AevoMarketData = await response.json();
-    result[`${ticker}-USD`] = {
-      fundingRate: data.funding_rate,
-      openInterest: data.markets.total_oi,
-      //dailyVolume: data.markets.daily_volume
-    };
+    if (data !== null) {
+      result[`${ticker}-USD`] = {
+        fundingRate: data.funding_rate,
+        openInterest: data.markets.total_oi,
+        //dailyVolume: data.markets.daily_volume
+      };
+    } else {
+      console.warn(`Failed to retrieve data for ${ticker} after ${maxRetries} retries.`);
+    }
   }
 
   return result;
