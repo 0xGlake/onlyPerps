@@ -5,7 +5,10 @@ import * as d3 from 'd3';
 
 type OpenInterestData = {
   [key: string]: {
-    [key: string]: string;
+    [key: string]: {
+      fundingRate: string;
+      openInterest: string;
+    };
   };
 };
 

@@ -1,7 +1,8 @@
 import FundingRateHeatMap from '../app/components/FundingRateHeatMap';
 import OpenInterestChart from '../app/components/OpenInterestStackedChart';
+//import { preprocessData } from './utils/preprocessdata';
 
-type FundingRateData = {
+type ExchangeData = {
   [key: string]: {
     [key: string]: {
       fundingRate: string;
@@ -10,13 +11,14 @@ type FundingRateData = {
   };
 };
 
-async function getData(): Promise<FundingRateData[]> {
+async function getData(): Promise<ExchangeData[]> {
   const response = await fetch('http://localhost:3000/api/top10');
   return await response.json();
 }
 
 export default async function Home() {
   const data = await getData();
+  //const preprocessedData = preprocessData(data);
 
   return (
     <div>

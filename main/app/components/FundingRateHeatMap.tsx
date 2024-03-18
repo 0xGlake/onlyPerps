@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
@@ -24,6 +25,8 @@ type FundingRateData = {
     };
   };
 };
+
+
 
 // Define a simple Tooltip component
 const Tooltip: React.FC<TooltipProps> = ({ show, content, position }) => {

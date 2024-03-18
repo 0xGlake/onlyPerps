@@ -10,25 +10,39 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAevo = void 0;
-function getAevo(tickers) {
-    return __awaiter(this, void 0, void 0, function* () {
+function getAevo(tickers_1) {
+    return __awaiter(this, arguments, void 0, function* (tickers, maxRetries = 3, retryDelay = 1000) {
         const result = {};
         for (const ticker of tickers) {
-            const url = `https://api.aevo.xyz/instrument/${ticker}-PERP`;
-            const response = yield fetch(url, {
-                headers: {
-                    'accept': 'application/json'
+            let retries = 0;
+            let data = null;
+            while (retries < maxRetries) {
+                const url = `https://api.aevo.xyz/instrument/${ticker}-PERP`;
+                const response = yield fetch(url, {
+                    headers: {
+                        'accept': 'application/json'
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
                 }
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error ${response.status}`);
+                data = yield response.json();
+                if (data !== null && data.funding_rate !== null && data.markets.total_oi !== null) {
+                    break;
+                }
+                retries++;
+                yield new Promise(resolve => setTimeout(resolve, retryDelay));
             }
-            const data = yield response.json();
-            result[`${ticker}-USD`] = {
-                fundingRate: data.funding_rate,
-                openInterest: data.markets.total_oi,
-                //dailyVolume: data.markets.daily_volume
-            };
+            if (data !== null) {
+                result[`${ticker}-USD`] = {
+                    fundingRate: data.funding_rate,
+                    openInterest: data.markets.total_oi,
+                    //dailyVolume: data.markets.daily_volume
+                };
+            }
+            else {
+                console.warn(`Failed to retrieve data for ${ticker} after ${maxRetries} retries.`);
+            }
         }
         return result;
     });

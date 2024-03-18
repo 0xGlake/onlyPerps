@@ -65,7 +65,6 @@ function storeData(data) {
         ];
         try {
             yield client.query(query, values);
-            console.log('heeeeeeeeere');
         }
         catch (err) {
             console.error('Error storing data:', err);
