@@ -27,12 +27,12 @@ function getRabbitX(tickers) {
         const marketsData = jsonResponse.result;
         // Accumulate filtered markets data using reduce, similar to your reference implementation
         const filteredMarkets = tickers.reduce((acc, ticker) => {
-            const marketKey = `${ticker}-USD`; // Adjust according to how your API identifies markets
+            const marketKey = `${ticker}-USD`;
             const market = marketsData.find((m) => m.id === marketKey);
             if (market) {
                 acc[marketKey] = {
                     fundingRate: market.instant_funding_rate,
-                    openInterest: market.open_interest
+                    openInterest: (market.open_interest / market.index_price).toString()
                 };
             }
             return acc;
@@ -41,3 +41,4 @@ function getRabbitX(tickers) {
     });
 }
 exports.getRabbitX = getRabbitX;
+getRabbitX(["BTC", "ETH", "SOL"]).then(console.log);
