@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
@@ -150,8 +149,8 @@ const FundingRateHeatMap = ({ data }) => {
           show: true,
           content: d,
           position: {
-            x: event.clientX - svgRect.left,
-            y: event.clientY - svgRect.top,
+            x: event.clientX,
+            y: event.clientY,
           },
         });
       })
@@ -160,8 +159,8 @@ const FundingRateHeatMap = ({ data }) => {
         setTooltipData((prev) => ({
           ...prev,
           position: {
-            x: event.clientX - svgRect.left,
-            y: event.clientY - svgRect.top,
+            x: event.clientX,
+            y: event.clientY,
           },
         }));
       })

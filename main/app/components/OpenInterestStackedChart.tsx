@@ -16,6 +16,7 @@ type TooltipData = {
   timestamp: Date;
   exchange: string;
   openInterest: number;
+  cumulativeOpenInterest: number;
 };
 
 type Props = {
@@ -26,7 +27,7 @@ type Props = {
   }[];
 };
 
-const Tooltip: React.FC<{ data: TooltipData | null }> = ({ data }) => {
+const Tooltip: React.FC<{ data: TooltipData | null; style: React.CSSProperties }> = ({ data, style }) => {
   if (!data) return null;
 
   return (
@@ -37,24 +38,29 @@ const Tooltip: React.FC<{ data: TooltipData | null }> = ({ data }) => {
         color: '#fff',
         padding: '8px',
         pointerEvents: 'none',
+        borderRadius: '4px',
+        fontSize: '12px',
+        ...style, // Apply the provided style prop
       }}
     >
-      <div>Timestamp: {data.timestamp.toISOString()}</div>
+      {/* <div>Timestamp: {data.timestamp.toDateString()}</div> */}
       <div>Exchange: {data.exchange}</div>
-      <div>Open Interest: {data.openInterest}</div>
+      <div>Cumulative OI: {data.cumulativeOpenInterest}</div>
     </div>
   );
 };
+
 
 const OpenInterestChart: React.FC<Props> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
+  const [cumulativeOpenInterest, setCumulativeOpenInterest] = useState<{ [key: string]: number }>({});
 
   useEffect(() => {
     if (!data || data.length === 0) return;
 
-    const margin = { top: 20, right: 20, bottom: 30, left: 130 };
+    const margin = { top: 25, right: 20, bottom: 35, left: 130 };
     const width = 1200 - margin.left - margin.right;
     const height = 200 - margin.top - margin.bottom;
 
@@ -73,6 +79,21 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
       .select(svgRef.current)
       .attr('width', width + margin.left + margin.right)
       .attr('height', height * assets.length + margin.top + margin.bottom);
+
+      const cumulativeOpenInterestData = data.reduce((acc, d) => {
+        Object.entries(d).forEach(([exchange, value]) => {
+          if (exchange !== 'id' && exchange !== 'timestamp') {
+            Object.entries(value as OpenInterestData).forEach(([asset, data]) => {
+              acc[exchange] = (acc[exchange] || 0) + parseFloat(data.openInterest);
+            });
+          }
+        });
+        return acc;
+      }, {} as { [key: string]: number });
+  
+      setCumulativeOpenInterest(cumulativeOpenInterestData);
+  
+
 
     assets.forEach((asset, index) => {
       const assetData = data.map((d) => ({
@@ -110,7 +131,7 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
         .append('g')
         .attr('transform', `translate(${margin.left},${margin.top + index * (height + margin.bottom)})`);
 
-      chartGroup
+        chartGroup
         .selectAll('path')
         .data(stackedData)
         .join('path')
@@ -119,29 +140,30 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
         .on('mouseover', (event, d) => {
           const [x, y] = d3.pointer(event);
           const timestamp = xScale.invert(x);
-          
-          if (d.data) {
-            const closestIndex = d3.bisectLeft(
-              d.data.map((d: { timestamp: Date; [key: string]: number }) => d.timestamp),
-              timestamp
-            );
-            const closestDataPoint: { timestamp: Date; [key: string]: number } = d.data[closestIndex];
-            
+      
+          if (d) {
+            const bisector = d3.bisector((d: { timestamp: Date }) => d.timestamp).left;
+            const closestIndex = bisector(d, timestamp);
+            const closestDataPoint = d[closestIndex];
+      
             setTooltipData({
-              timestamp: closestDataPoint.timestamp,
+              timestamp: closestDataPoint.data.timestamp,
               exchange: d.key,
-              openInterest: closestDataPoint[d.key],
+              openInterest: closestDataPoint.data[d.key],
+              cumulativeOpenInterest: cumulativeOpenInterest[d.key],
             });
-            
+      
             setTooltipPosition({ x: x + margin.left, y: y + margin.top + index * (height + margin.bottom) });
           }
         })
-        
+        .on('mousemove', (event) => {
+          const [x, y] = d3.pointer(event);
+          setTooltipPosition({ x: x + margin.left, y: y + margin.top + index * (height + margin.bottom) });
+        })
         .on('mouseout', () => {
           setTooltipData(null);
           setTooltipPosition(null);
         });
-
       chartGroup
         .append('g')
         .attr('transform', `translate(0,${height})`)
@@ -162,10 +184,17 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
     <div style={{ position: 'relative' }}>
       <svg ref={svgRef} />
       {tooltipData && tooltipPosition && (
-        <Tooltip data={tooltipData} style={{ left: tooltipPosition.x, top: tooltipPosition.y }} />
+        <Tooltip
+          data={{
+            ...tooltipData,
+            cumulativeOpenInterest: cumulativeOpenInterest[tooltipData.exchange], // Get the cumulative open interest for the current exchange
+          }}
+          style={{ left: tooltipPosition.x, top: tooltipPosition.y }}
+        />
       )}
     </div>
   );
 };
+
 
 export default OpenInterestChart;
