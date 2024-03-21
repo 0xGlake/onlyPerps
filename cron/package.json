@@ -17,6 +17,10 @@
     "typescript": "^5.4.2"
   },
   "dependencies": {
+    "@coral-xyz/anchor": "^0.29.0",
+    "@drift-labs/sdk": "^2.74.0-beta.7",
+    "@solana/spl-token": "^0.4.1",
+    "@solana/web3.js": "^1.91.1",
     "dotenv": "^16.4.5",
     "pg": "^8.11.3"
   }

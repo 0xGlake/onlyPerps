@@ -60,7 +60,7 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
   useEffect(() => {
     if (!data || data.length === 0) return;
 
-    const margin = { top: 25, right: 20, bottom: 35, left: 130 };
+    const margin = { top: 30, right: 20, bottom: 40, left: 130 };
     const width = 1200 - margin.left - margin.right;
     const height = 200 - margin.top - margin.bottom;
 

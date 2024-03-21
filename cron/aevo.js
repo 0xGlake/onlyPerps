@@ -10,8 +10,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAevo = void 0;
-function getAevo(tickers_1) {
-    return __awaiter(this, arguments, void 0, function* (tickers, maxRetries = 3, retryDelay = 1000) {
+function getAevo(tickers, maxRetries = 3, retryDelay = 1000) {
+    return __awaiter(this, void 0, void 0, function* () {
         const result = {};
         for (const ticker of tickers) {
             let retries = 0;
