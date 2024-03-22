@@ -11,6 +11,10 @@ export async function GET(request: Request) {
       AND rabbitx_data IS NOT NULL
       AND dydx_data IS NOT NULL
       AND hyper_data IS NOT NULL
+      AND aevo_data != '{}'
+      AND rabbitx_data != '{}'
+      AND dydx_data != '{}'
+      AND hyper_data != '{}'
     ORDER BY id DESC
     LIMIT 96;`);
     return NextResponse.json(rows);

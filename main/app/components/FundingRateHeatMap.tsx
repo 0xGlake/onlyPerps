@@ -106,13 +106,21 @@ const FundingRateHeatMap = ({ data }) => {
         .attr('transform', `translate(0,${height})`)
         .call(d3.axisBottom(xScale));
 
-    const fundingRates = data.flatMap((d) =>
-      exchanges.flatMap((exchange) =>
-        assets.map((asset) =>
-          parseFloat((d[exchange] as FundingRateData)[asset].fundingRate)
+        const fundingRates = data.flatMap((d) =>
+        exchanges.flatMap((exchange) =>
+          assets.map((asset) => {
+            const exchangeData = d[exchange] as FundingRateData;
+            const assetData = exchangeData?.[asset];
+            if (assetData && assetData.fundingRate) {
+              //console.log(parseFloat(assetData.fundingRate));
+              return parseFloat(assetData.fundingRate);
+            } else {
+              //console.log("funding rate error", assetData, assetData?.fundingRate, exchange, exchangeData);
+              return 0;
+            }
+          })
         )
-      )
-    );
+      );
 
     const colorScale = d3
       .scaleSequential(d3.interpolateRdYlGn)
