@@ -1,6 +1,6 @@
-import { AnchorProvider, BN } from '@coral-xyz/anchor';
-import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Connection, Keypair, PublicKey } from '@solana/web3.js';
+import { AnchorProvider, BN, Wallet as DriftWallet } from '@coral-xyz/anchor';
+//import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { Keypair, PublicKey } from '@solana/web3.js';
 import {
 	calculateReservePrice,
 	DriftClient,
@@ -11,7 +11,7 @@ import {
 	calculateTradeSlippage,
 	PRICE_PRECISION,
 	QUOTE_PRECISION,
-	Wallet,
+	//Wallet as DriftWallet,
 	PerpMarkets,
 	BASE_PRECISION,
 	getMarketOrderParams,
@@ -20,20 +20,8 @@ import {
 } from '@drift-labs/sdk';
 import { getRpcConnection } from './solanaHelper';
 
-export const getTokenAddress = (
-	mintAddress: string,
-	userPubKey: string
-): Promise<PublicKey> => {
-	return Token.getAssociatedTokenAddress(
-		new PublicKey(`ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`),
-		TOKEN_PROGRAM_ID,
-		new PublicKey(mintAddress),
-		new PublicKey(userPubKey)
-	);
-};
-
 const main = async () => {
-	const env = 'mainnet';
+	const env = 'mainnet-beta';
 	// Initialize Drift SDK
 	const sdkConfig = initialize({ env });
 
@@ -44,8 +32,7 @@ const main = async () => {
 	// const keypair = Keypair.fromSecretKey(
 	// 	Uint8Array.from(JSON.parse(privateKey))
 	// );
-	const wallet = new Wallet(newKeypair);
-  
+	const wallet = new DriftWallet(newKeypair);
 
 	// Set up the Connection
   const connection = await getRpcConnection();
