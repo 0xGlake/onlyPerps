@@ -2,19 +2,10 @@ import { AnchorProvider, BN, Wallet as DriftWallet } from '@coral-xyz/anchor';
 //import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import {
-	calculateReservePrice,
 	DriftClient,
-	User,
 	initialize,
-	PositionDirection,
-	convertToNumber,
-	calculateTradeSlippage,
-	PRICE_PRECISION,
-	QUOTE_PRECISION,
 	//Wallet as DriftWallet,
 	PerpMarkets,
-	BASE_PRECISION,
-	getMarketOrderParams,
 	BulkAccountLoader,
 	getMarketsAndOraclesForSubscription
 } from '@drift-labs/sdk';

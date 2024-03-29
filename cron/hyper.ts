@@ -35,6 +35,7 @@ export async function getHyper(tickers: string[]): Promise<{ [key: string]: { fu
         }
         return acc;
       }, {});
+      // TODO: check if filtered data is {} and throw error instead of returning
       return filteredData;
     } else {
       throw new Error('Data structure is not as expected or arrays do not match in length.');
