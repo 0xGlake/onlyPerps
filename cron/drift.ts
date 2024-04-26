@@ -11,14 +11,14 @@ import {
 } from '@drift-labs/sdk';
 import { getRpcConnection } from './solanaHelper';
 
-const main = async () => {
+const getDrift = async () => {
 	const env = 'mainnet-beta';
 	// Initialize Drift SDK
 	const sdkConfig = initialize({ env });
 
 	// Set up the Wallet and Provider
 	//const privateKey = process.env.BOT_PRIVATE_KEY; // stored as an array string
-  const newKeypair = Keypair.generate();
+  const newKeypair = Keypair.generate(); // just generate new keypair for each run
 	const wallet = new DriftWallet(newKeypair);
 
 	// Set up the Connection
@@ -60,6 +60,8 @@ const main = async () => {
 		(market) => market.baseAssetSymbol === 'SOL'
 	);
   console.log(solMarketInfo);
+
+  return driftClient;
 };
 
-main();
+getDrift();

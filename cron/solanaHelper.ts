@@ -4,7 +4,6 @@ dotenv.config();
 
 let rpcConnection: Connection | null = null;
 
-
 export async function getRpcConnection(): Promise<Connection> {
   if (rpcConnection) {
     return rpcConnection;
@@ -20,5 +19,3 @@ export async function getRpcConnection(): Promise<Connection> {
   console.log('RPC connection:', rpcConnection);
   return rpcConnection;
 };
-
-//getRpcConnection();
