@@ -7,7 +7,13 @@ import {
 	//Wallet as DriftWallet,
 	PerpMarkets,
 	BulkAccountLoader,
-	getMarketsAndOraclesForSubscription
+	getMarketsAndOraclesForSubscription,
+
+  calculateAllEstimatedFundingRate,
+  PerpMarketAccount,
+  BigNum,
+  BASE_PRECISION_EXP,
+  PRICE_PRECISION_EXP
 } from '@drift-labs/sdk';
 import { getRpcConnection } from './solanaHelper';
 
@@ -58,8 +64,33 @@ const getDrift = async () => {
 	// Get current price
 	const solMarketInfo = PerpMarkets[env].find(
 		(market) => market.baseAssetSymbol === 'SOL'
-	);
-  console.log(solMarketInfo);
+  );
+
+  const marketIndex = 0; //TODO THIS IS SOL MARKET
+  const market = driftClient.getPerpMarketAccount(marketIndex);
+  const OI = BigNum.from(
+    BN.max(
+      market?.amm.baseAssetAmountLong,
+      market?.amm.baseAssetAmountShort.abs()
+    ),
+    BASE_PRECISION_EXP
+  );
+
+  let priceData;
+
+  if (market && market.amm) {
+    priceData = driftClient.getOraclePriceDataAndSlot(market.amm.oracle);
+  } else {
+    throw new Error('Market or AMM is undefined');
+  }
+  const price = BigNum.from(priceData?.data.price, PRICE_PRECISION_EXP);
+
+  const quoteOIforMarket = price.toNum() * OI.toNum();
+
+  console.log(quoteOIforMarket);
+  //console.log(solMarketInfo);
+  //console.log(PerpMarkets[env]);
+
 
   return driftClient;
 };
