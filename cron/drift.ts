@@ -9,13 +9,16 @@ import {
 	BulkAccountLoader,
 	getMarketsAndOraclesForSubscription,
 
+  calculateLongShortFundingRate,
   calculateAllEstimatedFundingRate,
   PerpMarketAccount,
   BigNum,
   BASE_PRECISION_EXP,
-  PRICE_PRECISION_EXP
+  PRICE_PRECISION_EXP,
+  FUNDING_RATE_PRECISION_EXP
 } from '@drift-labs/sdk';
 import { getRpcConnection } from './solanaHelper';
+import { MainnetPerpMarkets } from './driftConstants'
 
 const getDrift = async () => {
 	const env = 'mainnet-beta';
@@ -38,8 +41,8 @@ const getDrift = async () => {
 	);
 
 	// Check SOL Balance
-	const lamportsBalance = await connection.getBalance(wallet.publicKey);
-	console.log('SOL balance:', lamportsBalance / 10 ** 9);
+	//const lamportsBalance = await connection.getBalance(wallet.publicKey);
+	//console.log('SOL balance:', lamportsBalance / 10 ** 9);
 
 	// Set up the Drift Client
 	const driftPublicKey = new PublicKey(sdkConfig.DRIFT_PROGRAM_ID);
@@ -62,11 +65,11 @@ const getDrift = async () => {
 
 
 	// Get current price
-	const solMarketInfo = PerpMarkets[env].find(
-		(market) => market.baseAssetSymbol === 'SOL'
-  );
+	// const solMarketInfo = PerpMarkets[env].find(
+	// 	(market) => market.baseAssetSymbol === 'SOL'
+  // );
 
-  const marketIndex = 0; //TODO THIS IS SOL MARKET
+  const marketIndex = MainnetPerpMarkets['SOL'].marketIndex;
   const market = driftClient.getPerpMarketAccount(marketIndex);
   const OI = BigNum.from(
     BN.max(
@@ -88,9 +91,13 @@ const getDrift = async () => {
   const quoteOIforMarket = price.toNum() * OI.toNum();
 
   console.log(quoteOIforMarket);
-  //console.log(solMarketInfo);
-  //console.log(PerpMarkets[env]);
 
+  const [markTwapLive, oracleTwapLive, _2, cappedAltEst, interpEst] = await calculateAllEstimatedFundingRate(
+    driftClient.getPerpMarketAccount(1)!, 
+    driftClient.getOracleDataForPerpMarket(1)
+  );
+
+  console.log(BigNum.from(cappedAltEst, FUNDING_RATE_PRECISION_EXP).toNum() + "         :)        " + BigNum.from(interpEst, FUNDING_RATE_PRECISION_EXP).toNum());
 
   return driftClient;
 };

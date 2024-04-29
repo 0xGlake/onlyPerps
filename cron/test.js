@@ -9,18 +9,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getTokenAddress = void 0;
 const anchor_1 = require("@coral-xyz/anchor");
-const spl_token_1 = require("@solana/spl-token");
+//import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 const web3_js_1 = require("@solana/web3.js");
 const sdk_1 = require("@drift-labs/sdk");
 const solanaHelper_1 = require("./solanaHelper");
-const getTokenAddress = (mintAddress, userPubKey) => {
-    return spl_token_1.Token.getAssociatedTokenAddress(new web3_js_1.PublicKey(`ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`), spl_token_1.TOKEN_PROGRAM_ID, new web3_js_1.PublicKey(mintAddress), new web3_js_1.PublicKey(userPubKey));
-};
-exports.getTokenAddress = getTokenAddress;
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
-    const env = 'mainnet';
+    const env = 'mainnet-beta';
     // Initialize Drift SDK
     const sdkConfig = (0, sdk_1.initialize)({ env });
     // Set up the Wallet and Provider
@@ -29,7 +24,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     // const keypair = Keypair.fromSecretKey(
     // 	Uint8Array.from(JSON.parse(privateKey))
     // );
-    const wallet = new sdk_1.Wallet(newKeypair);
+    const wallet = new anchor_1.Wallet(newKeypair);
     // Set up the Connection
     const connection = yield (0, solanaHelper_1.getRpcConnection)();
     // Set up the Provider

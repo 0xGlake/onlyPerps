@@ -16,6 +16,6 @@ export async function getRpcConnection(): Promise<Connection> {
   }
   rpcConnection = await new Connection(rpcAddress);
   console.log('Connected to RPC:', rpcAddress);
-  console.log('RPC connection:', rpcConnection);
+  //console.log('RPC connection:', rpcConnection);
   return rpcConnection;
 };

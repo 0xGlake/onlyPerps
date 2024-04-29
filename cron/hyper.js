@@ -37,6 +37,7 @@ function getHyper(tickers) {
                     }
                     return acc;
                 }, {});
+                // TODO: check if filtered data is {} and throw error instead of returning
                 return filteredData;
             }
             else {

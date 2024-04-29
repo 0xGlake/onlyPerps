@@ -29,10 +29,9 @@ function getRpcConnection() {
         }
         rpcConnection = yield new web3_js_1.Connection(rpcAddress);
         console.log('Connected to RPC:', rpcAddress);
-        console.log('RPC connection:', rpcConnection);
+        //console.log('RPC connection:', rpcConnection);
         return rpcConnection;
     });
 }
 exports.getRpcConnection = getRpcConnection;
 ;
-//getRpcConnection();

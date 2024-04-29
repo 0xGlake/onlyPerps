@@ -6,7 +6,7 @@ import { getHyper } from "./hyper";
 import dotenv from 'dotenv';
 dotenv.config();
 
-import pg from 'pg';
+import pg, { QueryResult } from 'pg';
 const { Client } = pg;
 
 const connectionString = process.env.CONNECTION_STRING;
@@ -63,15 +63,15 @@ async function storeData(data: ExchangeData) {
   ];
 
   try {
-    await client.query(query, values);
+    // Specifying the generic types here can help TypeScript infer the right overload
+    await client.query<QueryResult<any>>(query, values); // LOOK AT THIS LINE IF FUCKED ERROR
   } catch (err) {
-    console.error('Error storing data:', err);
+      console.error('Error storing data:', err);
   }
 }
 
 
 export async function handler(event: any, context: any): Promise<void> {
-
   try {
     await client.connect();
     console.log('Connected to database');

@@ -64,7 +64,8 @@ function storeData(data) {
             dataHyper ? JSON.stringify(dataHyper) : null,
         ];
         try {
-            yield client.query(query, values);
+            // Specifying the generic types here can help TypeScript infer the right overload
+            yield client.query(query, values); // LOOK AT THIS LINE IF FUCKED ERROR
         }
         catch (err) {
             console.error('Error storing data:', err);
