@@ -2,6 +2,8 @@ import { getAevo } from "./aevo";
 import { getRabbitX } from "./rabbit";
 import { getDyDx } from "./dydx";
 import { getHyper } from "./hyper";
+import { getVertex } from "./vertex";
+import { getDrift } from "./drift";
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -20,6 +22,8 @@ interface ExchangeData {
   dataRabbitx: Record<string, any> | null;
   dataDyDx: Record<string, any> | null;
   dataHyper: Record<string, any> | null;
+  dataVertex: Record<string, any> | null;
+  dataDrift: Record<string, any> | null;
 }
 
 export async function aggregate() {
@@ -39,20 +43,28 @@ export async function aggregate() {
     getHyper(['ETH', 'BTC', 'SOL']).catch(err => {
       console.error('Error fetching data from Hyper:', err);
       return null;
+    }),
+    getVertex(['ETH', 'BTC', 'SOL']).catch(err => {
+      console.error('Error fetching data from Vertex:', err);
+      return null;
+    }),
+    getDrift(['ETH', 'BTC', 'SOL']).catch(err => {
+      console.error('Error fetching data from Drift:', err);
+      return null;
     })
   ];
 
-  const [dataAevo, dataRabbitx, dataDyDx, dataHyper] = await Promise.all(promises);
-  return { dataAevo, dataRabbitx, dataDyDx, dataHyper };
+  const [dataAevo, dataRabbitx, dataDyDx, dataHyper, dataVertex, dataDrift] = await Promise.all(promises);
+  return { dataAevo, dataRabbitx, dataDyDx, dataHyper, dataVertex, dataDrift };
 }
 
 
 async function storeData(data: ExchangeData) {
-  const { dataAevo, dataRabbitx, dataDyDx, dataHyper } = data;
+  const { dataAevo, dataRabbitx, dataDyDx, dataHyper, dataVertex, dataDrift } = data;
 
   const query = `
-    INSERT INTO onlyperps (aevo_data, rabbitx_data, dydx_data, hyper_data)
-    VALUES ($1, $2, $3, $4)
+    INSERT INTO onlyperps (aevo_data, rabbitx_data, dydx_data, hyper_data, vertex_data, drift_data)
+    VALUES ($1, $2, $3, $4, $5, $6)
   `;
 
   const values = [
@@ -60,10 +72,13 @@ async function storeData(data: ExchangeData) {
     dataRabbitx ? JSON.stringify(dataRabbitx) : null,
     dataDyDx ? JSON.stringify(dataDyDx) : null,
     dataHyper ? JSON.stringify(dataHyper) : null,
+    dataVertex ? JSON.stringify(dataVertex) : null,
+    dataDrift ? JSON.stringify(dataDrift) : null
   ];
 
   try {
     // Specifying the generic types here can help TypeScript infer the right overload
+    console.log(values);
     await client.query<QueryResult<any>>(query, values); // LOOK AT THIS LINE IF FUCKED ERROR
   } catch (err) {
       console.error('Error storing data:', err);
