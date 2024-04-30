@@ -19,7 +19,7 @@ interface VertexMarketData {
   };
 }
 
-export async function getVertex(tickers: string[]): Promise<{ [key: string]: { fundingRate: number; openInterest: number; } }> {
+export async function getVertex(tickers: string[]): Promise<{ [key: string]: { fundingRate: string; openInterest: string; } }> {
   const url = 'https://archive.prod.vertexprotocol.com/v2/contracts';
   const response = await fetch(url, {
     headers: {
@@ -32,14 +32,14 @@ export async function getVertex(tickers: string[]): Promise<{ [key: string]: { f
   }
 
   const data: VertexMarketData = await response.json();
-  const result: { [key: string]: { fundingRate: number; openInterest: number; } } = {};
+  const result: { [key: string]: { fundingRate: string; openInterest: string; } } = {};
 
   for (const ticker of tickers) {
     const tickerKey = `${ticker}-PERP_USDC`;
     if (data[tickerKey]) {
       result[`${ticker}-USD`] = {
-        fundingRate: data[tickerKey].funding_rate,
-        openInterest: data[tickerKey].open_interest,
+        fundingRate: parseFloat(data[tickerKey].funding_rate.toString()).toFixed(18).toString(),
+        openInterest: data[tickerKey].open_interest.toString(),
       };
     }
   }
