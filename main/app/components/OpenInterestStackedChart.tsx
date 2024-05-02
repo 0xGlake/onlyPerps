@@ -32,16 +32,8 @@ const Tooltip: React.FC<{ data: TooltipData | null; style: React.CSSProperties }
 
   return (
     <div
-      style={{
-        position: 'absolute',
-        background: 'rgba(0, 0, 0, 0.8)',
-        color: '#fff',
-        padding: '8px',
-        pointerEvents: 'none',
-        borderRadius: '4px',
-        fontSize: '12px',
-        ...style, // Apply the provided style prop
-      }}
+      className="absolute bg-black bg-opacity-80 text-white p-2 pointer-events-none rounded text-xs"
+      style={style} // Apply the provided style prop
     >
       {/* <div>Timestamp: {data.timestamp.toDateString()}</div> */}
       <div>Exchange: {data.exchange}</div>
@@ -60,10 +52,11 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
   useEffect(() => {
     if (!data || data.length === 0) return;
 
-    const margin = { top: 0, right: 20, bottom: 0, left: 120 };
+    const margin = { top: 0, right: 20, bottom: -20, left: 120 };
     const containerRect = containerRef.current?.getBoundingClientRect();
     const width = containerRect ? containerRect.width - margin.left - margin.right : 0;
-    const height = 150 - margin.top - margin.bottom;
+    const chartMargin = 80;
+    const height = 275 - margin.top - margin.bottom - chartMargin;
 
     const timestamps = data.map((d) => new Date(d.timestamp));
     const exchanges = Object.keys(data[0]).filter(
@@ -77,10 +70,11 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
     );
 
     const svg = d3
-      .select(svgRef.current)
-      .attr('width', width + margin.left + margin.right)
-      .attr('height', height * assets.length + margin.top + margin.bottom);
-
+    .select(svgRef.current)
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height * assets.length + margin.top + margin.bottom + (assets.length - 1) * chartMargin);
+  
+  
       const cumulativeOpenInterestData = data.reduce((acc, d) => {
         Object.entries(d).forEach(([exchange, value]) => {
           if (exchange !== 'id' && exchange !== 'timestamp') {
@@ -116,7 +110,7 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
         .domain([0, d3.max(assetData, (d) => d3.sum(exchanges, (exchange) => d[exchange])) as number])
         .range([height, 0]);
 
-      const colorScale = d3.scaleOrdinal<string, string>().domain(exchanges).range(d3.schemeCategory10);
+      const colorScale = d3.scaleOrdinal<string, string>().domain(exchanges).range(d3.schemeTableau10);
 
       const stackedData = d3.stack<any>().keys(exchanges)(assetData);
 
@@ -126,10 +120,10 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
         .y0((d) => yScale(d[0]))
         .y1((d) => yScale(d[1]));
 
-      const chartGroup = svg
+        const chartGroup = svg
         .append('g')
-        .attr('transform', `translate(${margin.left},${margin.top + index * (height + margin.bottom)})`);
-
+        .attr('transform', `translate(${margin.left},${margin.top + index * (height + margin.bottom + chartMargin)})`);
+      
         chartGroup
         .selectAll('path')
         .data(stackedData)
@@ -152,12 +146,12 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
               cumulativeOpenInterest: cumulativeOpenInterest[d.key],
             });
       
-            setTooltipPosition({ x: x + margin.left, y: y + margin.top + index * (height + margin.bottom) });
+            setTooltipPosition({ x: x + margin.left, y: y + margin.top + index * (height + margin.bottom + chartMargin) });
           }
         })
         .on('mousemove', (event) => {
           const [x, y] = d3.pointer(event);
-          setTooltipPosition({ x: x + margin.left, y: y + margin.top + index * (height + margin.bottom) });
+          setTooltipPosition({ x: x + margin.left, y: y + margin.top + index * (height + margin.bottom + chartMargin) });
         })
         .on('mouseout', () => {
           setTooltipData(null);
@@ -172,13 +166,13 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
 
       chartGroup
         .append('text')
-        .attr('x', width / 2)
-        .attr('y', -margin.top / 2)
+        .attr('transform', 'rotate(-90)')
+        .attr('x', -height / 2)
+        .attr('y', -margin.left / 2)
         .attr('text-anchor', 'middle')
         .attr('fill', 'white')
-        .text(`Open Interest - ${asset}`);
-      ;
-    });
+        .text(`${asset}`.slice(0, -4));
+      });
   }, [data]);
 
   return (

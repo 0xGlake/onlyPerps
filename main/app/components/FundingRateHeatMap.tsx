@@ -39,10 +39,10 @@ const Tooltip: React.FC<TooltipProps> = ({ show, content, position }) => {
         top: `${position.y}px`,
       }}
     >
-      <div><strong>Exchange:</strong> {content.exchange}</div>
+      <div><strong>Exchange:</strong> {content.exchange.slice(0, -5).toUpperCase()}</div>
       <div><strong>Asset:</strong> {content.asset}</div>
       <div><strong>Funding Rate:</strong> {content.value}</div>
-      <div><strong>Time:</strong> {content.timestamp}</div>
+      <div><strong>Time:</strong> {content.timestamp.slice(0, -8)}</div>
     </div>
   );
 };
@@ -60,7 +60,7 @@ const FundingRateHeatMap = ({ data }) => {
   useEffect(() => {
     if (!data || data.length === 0) return;
 
-    const margin = { top: 0, right: 20, bottom: 0, left: 120 };
+    const margin = { top: 0, right: 20, bottom: 20, left: 120 };
     const containerRect = containerRef.current?.getBoundingClientRect();
     const width = containerRect ? containerRect.width - margin.left - margin.right : 0;
     const height = 300 - margin.top - margin.bottom;
@@ -87,13 +87,16 @@ const FundingRateHeatMap = ({ data }) => {
       .domain(yDomain)
       .padding(0);
 
-    svg
+      svg
       .append('g')
-      .call(d3.axisLeft(yScale).tickFormat((d) => d.split('-').join(' ')))
+      .call(d3.axisLeft(yScale).tickFormat((d) => {
+        return d.replace(/(\w+)-(\w+)-(\w+)_data/i, '$3 $1').toUpperCase();
+      }))
       .selectAll('text')
-      .attr('text-anchor', 'left') // Center the text horizontally
-      .attr('dy', '0.35em') // Adjust the vertical position of the text
+      .attr('text-anchor', 'left')
+      .attr('dy', '0.35em')
       .style('font-size', '10px');
+    
 
       const timestamps = data.slice().reverse().map((d) => new Date(d.timestamp));
 
