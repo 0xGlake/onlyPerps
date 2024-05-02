@@ -60,7 +60,7 @@ const FundingRateHeatMap = ({ data }) => {
   useEffect(() => {
     if (!data || data.length === 0) return;
 
-    const margin = { top: 0, right: 20, bottom: 20, left: 120 };
+    const margin = { top: 10, right: 90, bottom: 20, left: 85 };
     const containerRect = containerRef.current?.getBoundingClientRect();
     const width = containerRect ? containerRect.width - margin.left - margin.right : 0;
     const height = 300 - margin.top - margin.bottom;
@@ -179,6 +179,62 @@ const FundingRateHeatMap = ({ data }) => {
       .on('mouseout', () =>
         setTooltipData({ show: false, content: {}, position: { x: 0, y: 0 } })
       );
+
+    // Create a legend group
+    const legendGroup = svg
+      .append('g')
+      .attr('transform', `translate(${width}, 0)`);
+
+    // Create a linear gradient for the legend
+    const legendGradient = svg
+      .append('defs')
+      .append('linearGradient')
+      .attr('id', 'legendGradient')
+      .attr('x1', '0%')
+      .attr('y1', '0%')
+      .attr('x2', '0%')
+      .attr('y2', '100%');
+
+    // Define the gradient stops
+    legendGradient
+      .append('stop')
+      .attr('offset', '0%')
+      .attr('stop-color', colorScale(-colourScalar!));
+
+    legendGradient
+      .append('stop')
+      .attr('offset', '50%')
+      .attr('stop-color', colorScale(0));
+
+    legendGradient
+      .append('stop')
+      .attr('offset', '100%')
+      .attr('stop-color', colorScale(colourScalar!));
+
+    // Create the legend rectangle
+    legendGroup
+      .append('rect')
+      .attr('x', 20)
+      .attr('y', 0)
+      .attr('width', 20)
+      .attr('height', height)
+      .style('fill', 'url(#legendGradient)');
+
+    // Create the legend axis
+    const legendScale = d3
+      .scaleLinear()
+      .range([height, 0])
+      .domain([-colourScalar!, colourScalar!]);
+
+      const legendAxis = d3
+      .axisRight(legendScale)
+      .tickValues([-colourScalar!, -colourScalar! / 2, 0, colourScalar! / 2, colourScalar!])
+      .tickFormat(d3.format('.5f'));
+    
+    legendGroup
+      .append('g')
+      .attr('transform', 'translate(40, 0)')
+      .call(legendAxis);
   }, [data]);
 
   return (

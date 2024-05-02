@@ -52,7 +52,7 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
   useEffect(() => {
     if (!data || data.length === 0) return;
 
-    const margin = { top: 0, right: 20, bottom: -20, left: 120 };
+    const margin = { top: 0, right: 90, bottom: -20, left: 85 };
     const containerRect = containerRef.current?.getBoundingClientRect();
     const width = containerRect ? containerRect.width - margin.left - margin.right : 0;
     const chartMargin = 80;
@@ -173,6 +173,32 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
         .attr('fill', 'white')
         .text(`${asset}`.slice(0, -4));
       });
+
+      const colorScale = d3.scaleOrdinal<string, string>().domain(exchanges).range(d3.schemeTableau10);
+
+      const legend = svg
+      .append('g')
+      .attr('transform', `translate(${width + margin.left + 20}, ${margin.top})`);
+  
+    legend
+      .selectAll('rect')
+      .data(exchanges)
+      .join('rect')
+      .attr('y', (d, i) => i * 40)
+      .attr('width', 15)
+      .attr('height', 15)
+      .attr('fill', (d) => colorScale(d));
+  
+    legend
+      .selectAll('text')
+      .data(exchanges)
+      .join('text')
+      .attr('x', 20)
+      .attr('y', (d, i) => i * 40 + 11)
+      .text((d) => d.replace(/_data/i, '').toUpperCase())
+      .attr('font-size', '12px')
+      .attr('fill', 'white');
+  
   }, [data]);
 
   return (
