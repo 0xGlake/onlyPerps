@@ -49,6 +49,8 @@ const Tooltip: React.FC<TooltipProps> = ({ show, content, position }) => {
 
 const FundingRateHeatMap = ({ data }) => {
   const svgRef = useRef(null);
+  const containerRef = useRef(null);
+
   const [tooltipData, setTooltipData] = useState({
     show: false,
     content: {},
@@ -58,9 +60,10 @@ const FundingRateHeatMap = ({ data }) => {
   useEffect(() => {
     if (!data || data.length === 0) return;
 
-    const margin = { top: 20, right: 20, bottom: 20, left: 120 };
-    const width = 1300 - margin.left - margin.right;
-    const height = 400 - margin.top - margin.bottom;
+    const margin = { top: 0, right: 20, bottom: 0, left: 120 };
+    const containerRect = containerRef.current?.getBoundingClientRect();
+    const width = containerRect ? containerRect.width - margin.left - margin.right : 0;
+    const height = 300 - margin.top - margin.bottom;
 
     const svg = d3
       .select(svgRef.current)
@@ -82,11 +85,15 @@ const FundingRateHeatMap = ({ data }) => {
       .scaleBand()
       .range([height, 0])
       .domain(yDomain)
-      .padding(0.05);
+      .padding(0);
 
     svg
       .append('g')
-      .call(d3.axisLeft(yScale).tickFormat((d) => d.split('-').join(' ')));
+      .call(d3.axisLeft(yScale).tickFormat((d) => d.split('-').join(' ')))
+      .selectAll('text')
+      .attr('text-anchor', 'left') // Center the text horizontally
+      .attr('dy', '0.35em') // Adjust the vertical position of the text
+      .style('font-size', '10px');
 
       const timestamps = data.slice().reverse().map((d) => new Date(d.timestamp));
 
@@ -119,12 +126,12 @@ const FundingRateHeatMap = ({ data }) => {
 
       const colourScalar = d3.max(fundingRates, Math.abs);
       const colorScale = d3
-        .scaleSequential(d3.interpolateRgbBasis(["red", d3.rgb(240, 230, 255), "blue"]))
+        .scaleSequential(d3.interpolateRgbBasis(["red", d3.rgb(244, 203, 247), "blue"]))
         .domain([-colourScalar!, colourScalar!]);
             
-    const cellWidth = width / data.length;
-    const cellHeight = yScale.bandwidth();
-
+        const cellWidth = width / data.length;
+        const cellHeight = yScale.bandwidth();
+    
     svg
       .selectAll('.cell')
       .data(data.slice().reverse())
@@ -148,7 +155,6 @@ const FundingRateHeatMap = ({ data }) => {
       .attr('height', cellHeight)
       .attr('fill', (d) => colorScale(d.value))
       .on('mouseover', (event, d) => {
-        const svgRect = svg.node().getBoundingClientRect();
         setTooltipData({
           show: true,
           content: d,
@@ -159,7 +165,6 @@ const FundingRateHeatMap = ({ data }) => {
         });
       })
       .on('mousemove', (event) => {
-        const svgRect = svg.node().getBoundingClientRect();
         setTooltipData((prev) => ({
           ...prev,
           position: {
@@ -174,8 +179,7 @@ const FundingRateHeatMap = ({ data }) => {
   }, [data]);
 
   return (
-  <div className="w-full">
-
+  <div className="w-full" ref={containerRef}>
       <svg ref={svgRef} />
       <Tooltip
         show={tooltipData.show}

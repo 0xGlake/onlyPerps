@@ -50,19 +50,20 @@ const Tooltip: React.FC<{ data: TooltipData | null; style: React.CSSProperties }
   );
 };
 
-
 const OpenInterestChart: React.FC<Props> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
   const [cumulativeOpenInterest, setCumulativeOpenInterest] = useState<{ [key: string]: number }>({});
+  const containerRef = useRef(null);
 
   useEffect(() => {
     if (!data || data.length === 0) return;
 
-    const margin = { top: 30, right: 20, bottom: 40, left: 130 };
-    const width = 1200 - margin.left - margin.right;
-    const height = 200 - margin.top - margin.bottom;
+    const margin = { top: 0, right: 20, bottom: 0, left: 120 };
+    const containerRect = containerRef.current?.getBoundingClientRect();
+    const width = containerRect ? containerRect.width - margin.left - margin.right : 0;
+    const height = 150 - margin.top - margin.bottom;
 
     const timestamps = data.map((d) => new Date(d.timestamp));
     const exchanges = Object.keys(data[0]).filter(
@@ -93,8 +94,6 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
   
       setCumulativeOpenInterest(cumulativeOpenInterestData);
   
-
-
     assets.forEach((asset, index) => {
       const assetData = data.map((d) => ({
         timestamp: new Date(d.timestamp),
@@ -183,7 +182,7 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
   }, [data]);
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative' }} ref={containerRef}>
       <svg ref={svgRef} />
       {tooltipData && tooltipPosition && (
         <Tooltip
