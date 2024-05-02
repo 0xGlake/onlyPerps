@@ -28,8 +28,6 @@ function getRpcConnection() {
             throw new Error('RPC_ADDRESS environment variable is not set');
         }
         rpcConnection = yield new web3_js_1.Connection(rpcAddress);
-        console.log('Connected to RPC:', rpcAddress);
-        //console.log('RPC connection:', rpcConnection);
         return rpcConnection;
     });
 }

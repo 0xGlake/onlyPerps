@@ -15,7 +15,5 @@ export async function getRpcConnection(): Promise<Connection> {
     throw new Error('RPC_ADDRESS environment variable is not set');
   }
   rpcConnection = await new Connection(rpcAddress);
-  console.log('Connected to RPC:', rpcAddress);
-  //console.log('RPC connection:', rpcConnection);
   return rpcConnection;
 };

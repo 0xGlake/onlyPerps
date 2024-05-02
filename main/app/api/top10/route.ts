@@ -8,13 +8,17 @@ export async function GET(request: Request) {
     `SELECT *
     FROM onlyperps
     WHERE aevo_data IS NOT NULL
-      AND rabbitx_data IS NOT NULL
-      AND dydx_data IS NOT NULL
-      AND hyper_data IS NOT NULL
-      AND aevo_data != '{}'
-      AND rabbitx_data != '{}'
-      AND dydx_data != '{}'
-      AND hyper_data != '{}'
+    AND rabbitx_data IS NOT NULL
+    AND dydx_data IS NOT NULL
+    AND hyper_data IS NOT NULL
+    AND vertex_data IS NOT NULL
+    AND drift_data IS NOT NULL
+    AND aevo_data != '{}'
+    AND rabbitx_data != '{}'
+    AND dydx_data != '{}'
+    AND hyper_data != '{}'
+    AND vertex_data != '{}'
+    AND drift_data != '{}'
     ORDER BY id DESC
     LIMIT 96;`);
     return NextResponse.json(rows);

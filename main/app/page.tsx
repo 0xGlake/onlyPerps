@@ -1,5 +1,7 @@
 import FundingRateHeatMap from '../app/components/FundingRateHeatMap';
 import OpenInterestChart from '../app/components/OpenInterestStackedChart';
+import '../app/styles/globals.css';
+
 //import { preprocessData } from './utils/preprocessdata';
 
 type ExchangeData = {
@@ -21,12 +23,11 @@ export default async function Home() {
   //const preprocessedData = preprocessData(data);
 
   return (
-    <div>
-      <h1>Funding Rate Heat Map</h1>
-      <FundingRateHeatMap data={data} />
-
-      <h1>Open Interest Stacked Chart</h1>
-      <OpenInterestChart data={data} />
-    </div>
+    <div className="bg-gray-900 min-h-screen text-white p-8">
+      <h1 className="text-4xl font-bold mb-4 text-center">Funding Rate Heat Map</h1>
+        <FundingRateHeatMap data={data} />
+      <h1 className="text-4xl font-bold mt-8 mb-4 text-center">Open Interest Stacked Chart</h1>
+        <OpenInterestChart data={data} />
+  </div>
   );
 }

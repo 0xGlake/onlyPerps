@@ -77,7 +77,6 @@ function storeData(data) {
         ];
         try {
             // Specifying the generic types here can help TypeScript infer the right overload
-            console.log(values);
             yield client.query(query, values); // LOOK AT THIS LINE IF FUCKED ERROR
         }
         catch (err) {

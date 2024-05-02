@@ -176,7 +176,9 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
         .attr('x', width / 2)
         .attr('y', -margin.top / 2)
         .attr('text-anchor', 'middle')
+        .attr('fill', 'white')
         .text(`Open Interest - ${asset}`);
+      ;
     });
   }, [data]);
 
@@ -195,6 +197,5 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
     </div>
   );
 };
-
 
 export default OpenInterestChart;

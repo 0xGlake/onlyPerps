@@ -31,20 +31,14 @@ type FundingRateData = {
 const Tooltip: React.FC<TooltipProps> = ({ show, content, position }) => {
   if (!show) return null;
 
-  const style = {
-    position: 'absolute',
-    left: `${position.x}px`,
-    top: `${position.y}px`,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    color: '#fff',
-    padding: '8px',
-    borderRadius: '4px',
-    fontSize: '12px',
-    pointerEvents: 'none',
-  };
-
   return (
-    <div style={style}>
+    <div
+      className="absolute bg-black bg-opacity-60 text-white p-2 rounded text-xs pointer-events-none"
+      style={{
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+      }}
+    >
       <div><strong>Exchange:</strong> {content.exchange}</div>
       <div><strong>Asset:</strong> {content.asset}</div>
       <div><strong>Funding Rate:</strong> {content.value}</div>
@@ -64,8 +58,8 @@ const FundingRateHeatMap = ({ data }) => {
   useEffect(() => {
     if (!data || data.length === 0) return;
 
-    const margin = { top: 20, right: 20, bottom: 20, left: 130 };
-    const width = 1200 - margin.left - margin.right;
+    const margin = { top: 20, right: 20, bottom: 20, left: 120 };
+    const width = 1300 - margin.left - margin.right;
     const height = 400 - margin.top - margin.bottom;
 
     const svg = d3
@@ -122,10 +116,12 @@ const FundingRateHeatMap = ({ data }) => {
         )
       );
 
-    const colorScale = d3
-      .scaleSequential(d3.interpolateRdYlGn)
-      .domain([d3.min(fundingRates)!, d3.max(fundingRates)!]);
 
+      const colourScalar = d3.max(fundingRates, Math.abs);
+      const colorScale = d3
+        .scaleSequential(d3.interpolateRgbBasis(["red", d3.rgb(240, 230, 255), "blue"]))
+        .domain([-colourScalar!, colourScalar!]);
+            
     const cellWidth = width / data.length;
     const cellHeight = yScale.bandwidth();
 
@@ -178,14 +174,15 @@ const FundingRateHeatMap = ({ data }) => {
   }, [data]);
 
   return (
-    <>
+  <div className="w-full">
+
       <svg ref={svgRef} />
       <Tooltip
         show={tooltipData.show}
         content={tooltipData.content}
         position={tooltipData.position}
       />
-    </>
+    </div>
   );
 };
 

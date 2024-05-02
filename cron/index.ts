@@ -78,7 +78,6 @@ async function storeData(data: ExchangeData) {
 
   try {
     // Specifying the generic types here can help TypeScript infer the right overload
-    console.log(values);
     await client.query<QueryResult<any>>(query, values); // LOOK AT THIS LINE IF FUCKED ERROR
   } catch (err) {
       console.error('Error storing data:', err);
