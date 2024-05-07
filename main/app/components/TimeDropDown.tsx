@@ -1,9 +1,12 @@
 "use client"
-
 import React, { useState } from 'react';
 
-const TimeDropDown: React.FC = () => {
-  const [selectedOption, setSelectedOption] = useState('1D');
+interface TimeDropDownProps {
+  selectedOption: string;
+  setSelectedOption: (option: string) => void;
+}
+
+const TimeDropDown: React.FC<TimeDropDownProps> = ({ selectedOption, setSelectedOption }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleDropDownChange = (option: string) => {
@@ -27,10 +30,10 @@ const TimeDropDown: React.FC = () => {
       <button
         id="hs-dropdown-hover-event"
         type="button"
-        className="hs-dropdown-toggle py-3 px-4 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none">
-        {selectedOption}
+        className="hs-dropdown-toggle py-3 px-6 inline-flex items-center text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none">
+        {selectedOption.replace(/-/g, ' ')}
         <svg
-          className={`hs-dropdown-open:rotate-180 size-4 ${
+          className={`hs-dropdown-open:rotate-180 size-4 ml-1 ${
             isOpen ? 'rotate-180' : ''
           }`}
           xmlns="http://www.w3.org/2000/svg"
@@ -50,35 +53,28 @@ const TimeDropDown: React.FC = () => {
         onMouseEnter={handleMouseEnter}>
       </div>
       <div
-        className={`hs-dropdown-menu absolute top-full left-0 transition-[opacity,margin] duration-300 hs-dropdown-open:opacity-100 mt-2 ${
-          isOpen ? 'opacity-100' : 'opacity-0 invisible'
-        } min-w-40 bg-white shadow-md rounded-lg`}
-        aria-labelledby="hs-dropdown-hover-event">
-        <a
-          className={`flex items-center gap-x-3.5 py-2 px-3 rounded-lg text-sm text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 ${
-            selectedOption === '1D' ? 'bg-gray-100' : ''
-          }`}
-          href="#"
-          onClick={() => handleDropDownChange('1D')}>
-          1D
-        </a>
-        <a
-          className={`flex items-center gap-x-3.5 py-2 px-3 rounded-lg text-sm text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 ${
-            selectedOption === '3D' ? 'bg-gray-100' : ''
-          }`}
-          href="#"
-          onClick={() => handleDropDownChange('3D')}>
-          3D
-        </a>
-        <a
-          className={`flex items-center gap-x-3.5 py-2 px-3 rounded-lg text-sm text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 ${
-            selectedOption === '7D' ? 'bg-gray-100' : ''
-          }`}
-          href="#"
-          onClick={() => handleDropDownChange('7D')}>
-          7D
-        </a>
-      </div>
+      className={`hs-dropdown-menu absolute top-full left-0 transition-[opacity,margin] duration-300 hs-dropdown-open:opacity-100 mt-2
+        ${isOpen ? 'opacity-100' : 'opacity-0 invisible'} max-w-fit bg-white shadow-md rounded-lg`}
+      aria-labelledby="hs-dropdown-hover-event">
+
+      {['1-Day', '3-Days', '7-Days'].map((option) => {
+        const isSelected = selectedOption === option;
+        const itemClass = `flex items-center gap-x-3.5 py-2 px-7 rounded-lg text-sm text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 ${
+          isSelected ? 'bg-gray-100' : ''
+        }`;
+
+        return (
+          <a
+            key={option}
+            className={itemClass}
+            href="#"
+            onClick={() => handleDropDownChange(option)}
+          >
+            {option.replace(/-/g, ' ')}
+          </a>
+        );
+      })}
+    </div>
     </div>
   );
 };

@@ -126,7 +126,6 @@ const FundingRateHeatMap = ({ data }) => {
         )
       );
 
-
       const colourScalar = d3.max(fundingRates, Math.abs);
       const colorScale = d3
         .scaleSequential(d3.interpolateRgbBasis(["red", d3.rgb(244, 203, 247), "blue"]))
