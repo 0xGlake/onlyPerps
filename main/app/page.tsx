@@ -23,6 +23,7 @@ async function getData(selectedOption: string): Promise<ExchangeData[]> {
 
 export default function Home() {
   const [selectedOption, setSelectedOption] = useState('1 Day');
+  const [isAPR, setIsAPR] = useState(true)
   const [data, setData] = useState<ExchangeData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -45,7 +46,7 @@ export default function Home() {
     <div className="bg-gray-900 min-h-screen text-white p-8">
       <h1 className="text-4xl font-bold mb-0 text-center">Funding Rate Heat Map</h1>
       <div className='flex justify-center m-5 space-x-5'>
-        <AprToggleSwitch />
+        <AprToggleSwitch isAPR={isAPR} setIsAPR={setIsAPR} />
         <TimeDropDown selectedOption={selectedOption} setSelectedOption={setSelectedOption} />
       </div>
       {isLoading ? (

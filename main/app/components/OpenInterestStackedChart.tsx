@@ -87,7 +87,7 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
       
       setCumulativeOpenInterest(cumulativeOpenInterestData);
       
-      const colorScale = d3.scaleOrdinal<string, string>().domain(exchanges).range(d3.schemeTableau10);
+      const colorScale = d3.scaleOrdinal<string, string>().domain(exchanges).range(d3.schemeSet1);
       
       assets.forEach((asset, index) => {
         const assetData = data.map((d) => ({
@@ -144,7 +144,7 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
           .attr('dy', '1.5')
           .attr('stdDeviation', '1')
           .attr('flood-color', '#ffffff')
-          .attr('flood-opacity', '0.8');
+          .attr('flood-opacity', '0.85');
 
         const chartGroup = svg
           .append('g')

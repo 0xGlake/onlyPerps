@@ -128,7 +128,7 @@ const FundingRateHeatMap = ({ data }) => {
 
       const colourScalar = d3.max(fundingRates, Math.abs);
       const colorScale = d3
-        .scaleSequential(d3.interpolateRgbBasis(["red", d3.rgb(244, 203, 247), "blue"]))
+        .scaleSequential(d3.interpolateRgbBasis(["red", d3.rgb(213, 100, 247), "blue"]))
         .domain([-colourScalar!, colourScalar!]);
             
         const cellWidth = width / data.length;
@@ -186,30 +186,29 @@ const FundingRateHeatMap = ({ data }) => {
 
     // Create a linear gradient for the legend
     const legendGradient = svg
-      .append('defs')
-      .append('linearGradient')
-      .attr('id', 'legendGradient')
-      .attr('x1', '0%')
-      .attr('y1', '0%')
-      .attr('x2', '0%')
-      .attr('y2', '100%');
-
-    // Define the gradient stops
-    legendGradient
-      .append('stop')
-      .attr('offset', '0%')
-      .attr('stop-color', colorScale(-colourScalar!));
-
-    legendGradient
-      .append('stop')
-      .attr('offset', '50%')
-      .attr('stop-color', colorScale(0));
-
-    legendGradient
-      .append('stop')
-      .attr('offset', '100%')
-      .attr('stop-color', colorScale(colourScalar!));
-
+    .append('defs')
+    .append('linearGradient')
+    .attr('id', 'legendGradient')
+    .attr('x1', '0%')
+    .attr('y1', '0%')
+    .attr('x2', '0%')
+    .attr('y2', '100%');
+  
+  legendGradient
+    .append('stop')
+    .attr('offset', '0%')
+    .attr('stop-color', colorScale(colourScalar!));
+  
+  legendGradient
+    .append('stop')
+    .attr('offset', '50%')
+    .attr('stop-color', colorScale(0));
+  
+  legendGradient
+    .append('stop')
+    .attr('offset', '100%')
+    .attr('stop-color', colorScale(-colourScalar!));
+  
     // Create the legend rectangle
     legendGroup
       .append('rect')
@@ -221,13 +220,13 @@ const FundingRateHeatMap = ({ data }) => {
 
     // Create the legend axis
     const legendScale = d3
-      .scaleLinear()
-      .range([height, 0])
-      .domain([-colourScalar!, colourScalar!]);
-
+    .scaleLinear()
+    .range([height, 0])
+    .domain([-colourScalar!, colourScalar!]);
+  
       const legendAxis = d3
       .axisRight(legendScale)
-      .tickValues([-colourScalar!, -colourScalar! / 2, 0, colourScalar! / 2, colourScalar!])
+      .tickValues([colourScalar!, -colourScalar! / 2, 0, colourScalar! / 2, -colourScalar!])
       .tickFormat(d3.format('.5f'));
     
     legendGroup
