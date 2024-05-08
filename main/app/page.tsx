@@ -58,7 +58,7 @@ export default function Home() {
         </div>
       ) : (
         <>
-          <FundingRateHeatMap data={data} />
+          <FundingRateHeatMap data={data} isAPR={isAPR}/>
           <h1 className="text-4xl font-bold mt-8 mb-4 text-center">Open Interest Stacked Chart</h1>
           <OpenInterestChart data={data} />
         </>

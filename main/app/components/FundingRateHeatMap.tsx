@@ -2,6 +2,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
+type LegendProps = {
+  width: number;
+  height: number;
+  colorScale: d3.ScaleSequential<string>;
+  colourScalar: number;
+};
+
 type TooltipProps = {
   show: boolean;
   content: {
@@ -14,6 +21,7 @@ type TooltipProps = {
     x: number;
     y: number;
   };
+  isAPR: boolean;
 };
 
 type FundingRateData = {
@@ -25,12 +33,16 @@ type FundingRateData = {
   };
 };
 
-
+interface FundingRateHeatMapProps {
+  data: FundingRateData[];
+  isAPR: boolean;
+}
 
 // Define a simple Tooltip component
-const Tooltip: React.FC<TooltipProps> = ({ show, content, position }) => {
+const Tooltip: React.FC<TooltipProps> = ({ show, content, position, isAPR }) => {
   if (!show) return null;
 
+  console.log(isAPR);
   return (
     <div
       className="absolute bg-black bg-opacity-60 text-white p-2 rounded text-xs pointer-events-none"
@@ -41,13 +53,74 @@ const Tooltip: React.FC<TooltipProps> = ({ show, content, position }) => {
     >
       <div><strong>Exchange:</strong> {content.exchange.slice(0, -5).toUpperCase()}</div>
       <div><strong>Asset:</strong> {content.asset}</div>
-      <div><strong>Funding Rate:</strong> {content.value}</div>
+      <div>
+        <strong>Funding Rate:</strong>{' '}
+        {isAPR ? (
+          <>{(parseFloat(content.value) * 876000).toFixed(2)}%</>
+        ) : (
+          <>{content.value}</>
+        )}
+      </div>
       <div><strong>Time:</strong> {content.timestamp.slice(0, -8)}</div>
     </div>
   );
 };
 
-const FundingRateHeatMap = ({ data }) => {
+const Legend: React.FC<LegendProps> = ({ width, height, colorScale, colourScalar }) => {
+  const legendGroup = d3.select(document.createElementNS(d3.namespaces.svg, 'g'))
+    .attr('transform', `translate(${width}, 0)`);
+
+  const legendGradient = legendGroup
+    .append('defs')
+    .append('linearGradient')
+    .attr('id', 'legendGradient')
+    .attr('x1', '0%')
+    .attr('y1', '0%')
+    .attr('x2', '0%')
+    .attr('y2', '100%');
+
+  legendGradient
+    .append('stop')
+    .attr('offset', '0%')
+    .attr('stop-color', colorScale(colourScalar));
+
+  legendGradient
+    .append('stop')
+    .attr('offset', '50%')
+    .attr('stop-color', colorScale(0));
+
+  legendGradient
+    .append('stop')
+    .attr('offset', '100%')
+    .attr('stop-color', colorScale(-colourScalar));
+
+  legendGroup
+    .append('rect')
+    .attr('x', 20)
+    .attr('y', 0)
+    .attr('width', 20)
+    .attr('height', height)
+    .style('fill', 'url(#legendGradient)');
+
+  const legendScale = d3
+    .scaleLinear()
+    .range([height, 0])
+    .domain([-colourScalar, colourScalar]);
+
+  const legendAxis = d3
+    .axisRight(legendScale)
+    .tickValues([colourScalar, -colourScalar / 2, 0, colourScalar / 2, -colourScalar])
+    .tickFormat(d3.format('.5f'));
+
+  legendGroup
+    .append('g')
+    .attr('transform', 'translate(40, 0)')
+    .call(legendAxis);
+
+  return legendGroup.node();
+};
+
+const FundingRateHeatMap: React.FC<FundingRateHeatMapProps> = ({ data, isAPR }) => {
   const svgRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -179,60 +252,13 @@ const FundingRateHeatMap = ({ data }) => {
         setTooltipData({ show: false, content: {}, position: { x: 0, y: 0 } })
       );
 
-    // Create a legend group
-    const legendGroup = svg
-      .append('g')
-      .attr('transform', `translate(${width}, 0)`);
-
-    // Create a linear gradient for the legend
-    const legendGradient = svg
-    .append('defs')
-    .append('linearGradient')
-    .attr('id', 'legendGradient')
-    .attr('x1', '0%')
-    .attr('y1', '0%')
-    .attr('x2', '0%')
-    .attr('y2', '100%');
-  
-  legendGradient
-    .append('stop')
-    .attr('offset', '0%')
-    .attr('stop-color', colorScale(colourScalar!));
-  
-  legendGradient
-    .append('stop')
-    .attr('offset', '50%')
-    .attr('stop-color', colorScale(0));
-  
-  legendGradient
-    .append('stop')
-    .attr('offset', '100%')
-    .attr('stop-color', colorScale(-colourScalar!));
-  
-    // Create the legend rectangle
-    legendGroup
-      .append('rect')
-      .attr('x', 20)
-      .attr('y', 0)
-      .attr('width', 20)
-      .attr('height', height)
-      .style('fill', 'url(#legendGradient)');
-
-    // Create the legend axis
-    const legendScale = d3
-    .scaleLinear()
-    .range([height, 0])
-    .domain([-colourScalar!, colourScalar!]);
-  
-      const legendAxis = d3
-      .axisRight(legendScale)
-      .tickValues([colourScalar!, -colourScalar! / 2, 0, colourScalar! / 2, -colourScalar!])
-      .tickFormat(d3.format('.5f'));
-    
-    legendGroup
-      .append('g')
-      .attr('transform', 'translate(40, 0)')
-      .call(legendAxis);
+      const legendNode = Legend({
+        width,
+        height,
+        colorScale,
+        colourScalar: colourScalar!,
+      });
+      svg.node()?.appendChild(legendNode!);
   }, [data]);
 
   return (
@@ -242,6 +268,7 @@ const FundingRateHeatMap = ({ data }) => {
         show={tooltipData.show}
         content={tooltipData.content}
         position={tooltipData.position}
+        isAPR={isAPR}
       />
     </div>
   );
