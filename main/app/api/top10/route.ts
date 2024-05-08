@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     AND drift_data != '{}'
     AND vertex_data != '{}'
     ORDER BY id DESC
-    LIMIT 480;`);
+    LIMIT 672;`);
     return NextResponse.json(rows);
   } catch (error) {
     console.error('Error fetching data from Neon:', error);

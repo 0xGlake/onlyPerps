@@ -5,7 +5,7 @@ import OpenInterestChart from '../app/components/OpenInterestStackedChart';
 import '../app/styles/globals.css';
 import AprToggleSwitch from './components/AprToggleSwitch';
 import TimeDropDown from './components/TimeDropDown';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 type ExchangeData = {
   [key: string]: {
@@ -16,31 +16,50 @@ type ExchangeData = {
   };
 };
 
-async function getData(selectedOption: string): Promise<ExchangeData[]> {
-  const response = await fetch(`http://localhost:3000/api/top10?timeframe=${selectedOption}`);
+async function getData(): Promise<ExchangeData[]> {
+  const response = await fetch(`http://localhost:3000/api/top10`);
   return await response.json();
 }
 
+function filterData(data: ExchangeData[], selectedOption: string): ExchangeData[] {
+  const timeframes: { [key: string]: number } = {
+    '1-Day': 96,
+    '3-Days': 96*3,
+    '7-Days': 96*7
+  };
+
+  const timeframe = timeframes[selectedOption];
+  return data.slice(0, timeframe);
+}
+
 export default function Home() {
-  const [selectedOption, setSelectedOption] = useState('1 Day');
+  const [selectedOption, setSelectedOption] = useState('1-Day');
   const [isAPR, setIsAPR] = useState(true)
   const [data, setData] = useState<ExchangeData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [filteredData, setFilteredData] = useState<ExchangeData[]>([]);
+
+  const fetchData = async () => {
+    //if (data.length > 1) return;
+    setIsLoading(true);
+    try {
+      const fetchedData = await getData();
+      setData(fetchedData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {  
+    fetchData();
+  }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const fetchedData = await getData(selectedOption);
-        setData(fetchedData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-      setIsLoading(false);
-    };
-
-    fetchData();
-  }, [selectedOption]);
+    setFilteredData(filterData(data, selectedOption));
+  }, [selectedOption, data]);
+  
+  const memoizedFilteredData = useMemo(() => filterData(data, selectedOption), [data, selectedOption]);
 
   return (
     <div className="bg-gray-900 min-h-screen text-white p-8">
@@ -58,9 +77,9 @@ export default function Home() {
         </div>
       ) : (
         <>
-          <FundingRateHeatMap data={data} isAPR={isAPR}/>
+          <FundingRateHeatMap data={memoizedFilteredData} isAPR={isAPR}/>
           <h1 className="text-4xl font-bold mt-8 mb-4 text-center">Open Interest Stacked Chart</h1>
-          <OpenInterestChart data={data} />
+          <OpenInterestChart data={memoizedFilteredData} />
         </>
       )}
     </div>

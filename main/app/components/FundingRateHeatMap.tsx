@@ -54,7 +54,6 @@ const getTooltipPosition = (event: React.MouseEvent) => {
 const Tooltip: React.FC<TooltipProps> = ({ show, content, position, isAPR }) => {
   if (!show) return null;
 
-  console.log(isAPR);
   return (
     <div
       className="absolute bg-black bg-opacity-60 text-white p-2 rounded text-xs pointer-events-none"
@@ -199,6 +198,7 @@ const FundingRateHeatMap: React.FC<FundingRateHeatMapProps> = ({ data, isAPR }) 
       
       const cellWidth = width / data.length;
       const cellHeight = yScale.bandwidth();
+      const cellWidthAdjustment = 0.5;
 
       svg
         .append('g')
@@ -246,9 +246,10 @@ const FundingRateHeatMap: React.FC<FundingRateHeatMapProps> = ({ data, isAPR }) 
       .join('rect')
       .attr('x', 0)
       .attr('y', (d) => yScale(`${d.asset}-${d.exchange}`)!)
-      .attr('width', cellWidth)
+      .attr('width', cellWidth + cellWidthAdjustment)
       .attr('height', cellHeight)
       .attr('fill', (d) => colorScale(d.value))
+      .attr('fill-opacity', 1)
       .on('mouseover', (event, d) => {
         setTooltipData({
           show: true,

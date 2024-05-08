@@ -69,6 +69,8 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
       )
     );
 
+    d3.select(svgRef.current).selectAll('*').remove();
+
     const svg = d3
     .select(svgRef.current)
     .attr('width', width + margin.left + margin.right)
@@ -158,7 +160,7 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
         .attr('fill', 'none')
         .attr('stroke', (d) => colorScale(d.key))
         .attr('stroke-width', 1.5)
-        .attr('opacity', 0.5)
+        .attr('opacity', 0.65)
         .attr('filter', 'url(#dropShadow)') 
         .attr('d', (d) => {
           const lineData: [number, number][] = d.map((point) => [
@@ -174,7 +176,7 @@ const OpenInterestChart: React.FC<Props> = ({ data }) => {
         .join('path')
         .attr('class', 'area')
         .attr('fill', (d) => colorScale(d.key))
-        .attr('fill-opacity', 0.6)
+        .attr('fill-opacity', 0.80)
         .attr('d', area)
               .on('mouseover', (event, d) => {
           const [x, y] = d3.pointer(event);
