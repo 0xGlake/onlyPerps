@@ -145,6 +145,8 @@ const FundingRateHeatMap: React.FC<FundingRateHeatMapProps> = ({ data, isAPR }) 
     const width = containerRect ? containerRect.width - margin.left - margin.right : 0;
     const height = 300 - margin.top - margin.bottom;
 
+    d3.select(svgRef.current).selectAll('*').remove();
+
     const svg = d3
       .select(svgRef.current)
       .attr('width', width + margin.left + margin.right)
@@ -176,7 +178,6 @@ const FundingRateHeatMap: React.FC<FundingRateHeatMapProps> = ({ data, isAPR }) 
       .attr('text-anchor', 'left')
       .attr('dy', '0.35em')
       .style('font-size', '10px');
-    
 
       const timestamps = data.slice().reverse().map((d) => new Date(d.timestamp));
 
@@ -268,7 +269,7 @@ const FundingRateHeatMap: React.FC<FundingRateHeatMapProps> = ({ data, isAPR }) 
       });
       svg.node()?.appendChild(legendNode!);
 
-  }, [data]);
+  }, [data, isAPR]);
 
   return (
   <div className="w-full" ref={containerRef}>
