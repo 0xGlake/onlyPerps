@@ -39,6 +39,17 @@ interface FundingRateHeatMapProps {
   isAPR: boolean;
 }
 
+
+const getTooltipPosition = (event: React.MouseEvent) => {
+  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+  return {
+    x: event.clientX + scrollLeft,
+    y: event.clientY + scrollTop,
+  };
+};
+
+
 // Define a simple Tooltip component
 const Tooltip: React.FC<TooltipProps> = ({ show, content, position, isAPR }) => {
   if (!show) return null;
@@ -186,6 +197,9 @@ const FundingRateHeatMap: React.FC<FundingRateHeatMapProps> = ({ data, isAPR }) 
         .range([0, width])
         .domain(d3.extent(timestamps) as [Date, Date]);
       
+      const cellWidth = width / data.length;
+      const cellHeight = yScale.bandwidth();
+
       svg
         .append('g')
         .attr('transform', `translate(0,${height})`)
@@ -207,14 +221,12 @@ const FundingRateHeatMap: React.FC<FundingRateHeatMapProps> = ({ data, isAPR }) 
         )
       );
 
-      const colourScalar = d3.max(fundingRates, Math.abs);
-      const colorScale = d3
-        .scaleSequential(d3.interpolateRgbBasis(["red", d3.rgb(213, 100, 247), "blue"]))
-        .domain([-colourScalar!, colourScalar!]);
-            
-        const cellWidth = width / data.length;
-        const cellHeight = yScale.bandwidth();
-    
+    const colourScalar = d3.max(fundingRates, Math.abs);
+    const colorScale = d3
+      .scaleSequential(d3.interpolateRgbBasis(["red", d3.rgb(213, 100, 247), "blue"]))
+      .domain([-colourScalar!, colourScalar!]);
+
+
     svg
       .selectAll('.cell')
       .data(data.slice().reverse())
@@ -241,19 +253,13 @@ const FundingRateHeatMap: React.FC<FundingRateHeatMapProps> = ({ data, isAPR }) 
         setTooltipData({
           show: true,
           content: d,
-          position: {
-            x: event.clientX,
-            y: event.clientY,
-          },
+          position: getTooltipPosition(event),
         });
       })
       .on('mousemove', (event) => {
         setTooltipData((prev) => ({
           ...prev,
-          position: {
-            x: event.clientX,
-            y: event.clientY,
-          },
+          position: getTooltipPosition(event),
         }));
       })
       .on('mouseout', () =>
@@ -267,6 +273,7 @@ const FundingRateHeatMap: React.FC<FundingRateHeatMapProps> = ({ data, isAPR }) 
         colourScalar: colourScalar!,
         isAPR
       });
+
       svg.node()?.appendChild(legendNode!);
 
   }, [data, isAPR]);
