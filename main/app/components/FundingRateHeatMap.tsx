@@ -7,6 +7,7 @@ type LegendProps = {
   height: number;
   colorScale: d3.ScaleSequential<string>;
   colourScalar: number;
+  isAPR: boolean;
 };
 
 type TooltipProps = {
@@ -66,7 +67,7 @@ const Tooltip: React.FC<TooltipProps> = ({ show, content, position, isAPR }) => 
   );
 };
 
-const Legend: React.FC<LegendProps> = ({ width, height, colorScale, colourScalar }) => {
+const Legend: React.FC<LegendProps> = ({ width, height, colorScale, colourScalar, isAPR }) => {
   const legendGroup = d3.select(document.createElementNS(d3.namespaces.svg, 'g'))
     .attr('transform', `translate(${width}, 0)`);
 
@@ -110,7 +111,13 @@ const Legend: React.FC<LegendProps> = ({ width, height, colorScale, colourScalar
   const legendAxis = d3
     .axisRight(legendScale)
     .tickValues([colourScalar, -colourScalar / 2, 0, colourScalar / 2, -colourScalar])
-    .tickFormat(d3.format('.5f'));
+    .tickFormat((d) => {
+      if (isAPR) {
+        return `${((d as number) * 876000).toFixed(2)}%`;
+      } else {
+        return d3.format('.5f')(d as number);
+      }
+  });
 
   legendGroup
     .append('g')
@@ -251,14 +258,16 @@ const FundingRateHeatMap: React.FC<FundingRateHeatMapProps> = ({ data, isAPR }) 
       .on('mouseout', () =>
         setTooltipData({ show: false, content: {}, position: { x: 0, y: 0 } })
       );
-
+      
       const legendNode = Legend({
         width,
         height,
         colorScale,
         colourScalar: colourScalar!,
+        isAPR
       });
       svg.node()?.appendChild(legendNode!);
+
   }, [data]);
 
   return (
