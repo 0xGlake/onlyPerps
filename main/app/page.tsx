@@ -45,7 +45,7 @@ function filterData(data: ExchangeData[], selectedOption: string): ExchangeData[
 }
 
 export default function Home() {
-  const [selectedOption, setSelectedOption] = useState('3-Day');
+  const [selectedOption, setSelectedOption] = useState('7-Days');
   const [isAPR, setIsAPR] = useState(true)
   const [isBase, setIsBase] = useState(true)
   const [data, setData] = useState<ExchangeData[]>([]);
