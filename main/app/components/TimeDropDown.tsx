@@ -30,7 +30,7 @@ const TimeDropDown: React.FC<TimeDropDownProps> = ({ selectedOption, setSelected
       <button
         id="hs-dropdown-hover-event"
         type="button"
-        className="hs-dropdown-toggle py-3 px-6 inline-flex items-center text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none">
+        className="hs-dropdown-toggle py-3 px-6 inline-flex items-center text-sm font-medium rounded-lg border border-gray-200 bg-white hover:bg-gray-300 text-gray-600 shadow-sm disabled:opacity-50 disabled:pointer-events-none">
         {selectedOption.replace(/-/g, ' ')}
         <svg
           className={`hs-dropdown-open:rotate-180 size-4 ml-1 ${
@@ -59,8 +59,8 @@ const TimeDropDown: React.FC<TimeDropDownProps> = ({ selectedOption, setSelected
 
       {['1-Day', '3-Days', '7-Days'].map((option) => {
         const isSelected = selectedOption === option;
-        const itemClass = `flex items-center gap-x-3.5 py-2 px-7 rounded-lg text-sm text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 ${
-          isSelected ? 'bg-gray-100' : ''
+        const itemClass = `flex items-center gap-x-3.5 py-2 px-7 rounded-lg text-sm text-gray-800 hover:bg-gray-300 focus:outline-none focus:bg-gray-100 ${
+          isSelected ? 'bg-blue-300' : ''
         }`;
 
         return (
