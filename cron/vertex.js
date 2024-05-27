@@ -27,7 +27,7 @@ function getVertex(tickers) {
             const tickerKey = `${ticker}-PERP_USDC`;
             if (data[tickerKey]) {
                 result[`${ticker}-USD`] = {
-                    fundingRate: parseFloat(data[tickerKey].funding_rate.toString()).toFixed(18).toString(),
+                    fundingRate: (parseFloat(data[tickerKey].funding_rate.toString()) * 0.04).toFixed(18).toString(),
                     openInterest: data[tickerKey].open_interest.toString(),
                 };
             }

@@ -59,3 +59,6 @@ export async function getAevo(tickers: string[], maxRetries = 3, retryDelay = 10
 
   return result;
 }
+
+
+
