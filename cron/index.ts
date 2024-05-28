@@ -25,7 +25,6 @@ interface ExchangeData {
   dataHyper: Record<string, any> | null;
   dataVertex: Record<string, any> | null;
   dataDrift: Record<string, any> | null;
-  dataTokens: Record<string, CoinData>[] | null;
 }
 
 export async function aggregate() {
@@ -53,15 +52,11 @@ export async function aggregate() {
     getDrift(['ETH', 'BTC', 'SOL']).catch(err => {
       console.error('Error fetching data from Drift:', err);
       return null;
-    }),
-    fetchCoinData(['aevo-exchange', 'rabbitx', 'dydx-chain', 'vertex-protocol', 'drift-protocol', 'jupiter-exchange-solana', 'gmx']).catch(err => {
-      console.error('Error fetching data from tokensData:', err);
-      return null;
     })
   ];
 
-  const [dataAevo, dataRabbitx, dataDyDx, dataHyper, dataVertex, dataDrift, dataTokens] = await Promise.all(promises);
-  return { dataAevo, dataRabbitx, dataDyDx, dataHyper, dataVertex, dataDrift, dataTokens };
+  const [dataAevo, dataRabbitx, dataDyDx, dataHyper, dataVertex, dataDrift] = await Promise.all(promises);
+  return { dataAevo, dataRabbitx, dataDyDx, dataHyper, dataVertex, dataDrift };
 }
 
 
@@ -90,16 +85,42 @@ async function storeData(data: ExchangeData) {
   }
 }
 
+async function storeTokenData(data: Record<string, CoinData>) {
+  const query = `
+    INSERT INTO onlyperpstokens (data)
+    VALUES ($1)
+  `;
+
+  const values = [JSON.stringify(data)];
+
+  try {
+    await client.query<QueryResult<any>>(query, values);
+  } catch (err) {
+    console.error('Error storing token data:', err);
+  }
+}
 
 export async function handler(event: any, context: any): Promise<void> {
   try {
     await client.connect();
     console.log('Connected to database');
 
-    const data = await aggregate();
-    await storeData(data);
+    const [data, tokenData] = await Promise.all([
+      aggregate(),
+      fetchCoinData(['aevo-exchange', 'rabbitx', 'dydx-chain', 'vertex-protocol', 'drift-protocol', 'jupiter-exchange-solana', 'gmx']).catch(err => {
+        console.error('Error fetching token data:', err);
+        return {};
+      }),
+    ]);
+
+    await Promise.all([
+      storeData(data),
+      storeTokenData(tokenData),
+    ]);
 
     console.log('Data stored in the onlyperps table');
+    console.log('Token data stored in the onlyperpstokens table');
+
   } catch (err) {
     console.error('Error:', err);
   } finally {

@@ -43,7 +43,7 @@ function createCoinDataMap(data: CoinData[]): Record<string, CoinData> {
   }, {} as Record<string, CoinData>);
 }
 
-export function fetchCoinData(coinIds: string[]): Promise<Record<string, CoinData>> {
+export async function fetchCoinData(coinIds: string[]): Promise<Record<string, CoinData>> {
   if (!COIN_GECKO) {
     return Promise.reject('API key is not defined. Please set COIN_GECKO in your environment variables.');
   }
