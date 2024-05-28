@@ -91,7 +91,17 @@ async function storeTokenData(data: Record<string, CoinData>) {
     VALUES ($1)
   `;
 
-  const values = [JSON.stringify(data)];
+  const tokenData: Record<string, Partial<CoinData>> = {};
+
+  for (const [tokenId, coinData] of Object.entries(data)) {
+    tokenData[tokenId] = {
+      current_price: coinData.current_price,
+      fully_diluted_valuation: coinData.fully_diluted_valuation,
+      market_cap: coinData.market_cap,
+    };
+  }
+
+  const values = [JSON.stringify(tokenData)];
 
   try {
     await client.query<QueryResult<any>>(query, values);
