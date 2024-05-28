@@ -4,6 +4,7 @@ import { getDyDx } from "./dydx";
 import { getHyper } from "./hyper";
 import { getVertex } from "./vertex";
 import { getDrift } from "./drift";
+import { fetchCoinData, CoinData } from "./tokensData";
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -24,6 +25,7 @@ interface ExchangeData {
   dataHyper: Record<string, any> | null;
   dataVertex: Record<string, any> | null;
   dataDrift: Record<string, any> | null;
+  dataTokens: Record<string, CoinData>[] | null;
 }
 
 export async function aggregate() {
@@ -51,11 +53,15 @@ export async function aggregate() {
     getDrift(['ETH', 'BTC', 'SOL']).catch(err => {
       console.error('Error fetching data from Drift:', err);
       return null;
+    }),
+    fetchCoinData(['aevo-exchange', 'rabbitx', 'dydx-chain', 'vertex-protocol', 'drift-protocol', 'jupiter-exchange-solana', 'gmx']).catch(err => {
+      console.error('Error fetching data from tokensData:', err);
+      return null;
     })
   ];
 
-  const [dataAevo, dataRabbitx, dataDyDx, dataHyper, dataVertex, dataDrift] = await Promise.all(promises);
-  return { dataAevo, dataRabbitx, dataDyDx, dataHyper, dataVertex, dataDrift };
+  const [dataAevo, dataRabbitx, dataDyDx, dataHyper, dataVertex, dataDrift, dataTokens] = await Promise.all(promises);
+  return { dataAevo, dataRabbitx, dataDyDx, dataHyper, dataVertex, dataDrift, dataTokens };
 }
 
 
