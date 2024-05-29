@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-interface ExchangeData {
+export interface BroadExchangeData {
   name: string;
   id: string;
   open_interest_btc: number;
@@ -18,7 +18,7 @@ interface ExchangeData {
   trade_volume_24h_usd: number;
 }
 
-export async function fetchExchangeData(exchangeIds: string[]): Promise<Map<string, ExchangeData>> {
+export async function fetchExchangeData(exchangeIds: string[]): Promise<Map<string, BroadExchangeData>> {
   const COIN_GECKO = process.env.COIN_GECKO;
 
   if (!COIN_GECKO) {
@@ -44,26 +44,25 @@ export async function fetchExchangeData(exchangeIds: string[]): Promise<Map<stri
     const exchangeResponse = await fetch(exchangesUrl, options);
     const exchangeData = await exchangeResponse.json();
     
-    const exchangeMap: Map<string, ExchangeData> = new Map();
+    const exchangeMap: Map<string, BroadExchangeData> = new Map();
 
     // Filter and store the exchanges in the map
     exchangeData
-      .filter((exchange: ExchangeData) => exchangeIds.includes(exchange.id))
-      .forEach((exchange: ExchangeData) => {
+      .filter((exchange: BroadExchangeData) => exchangeIds.includes(exchange.id))
+      .forEach((exchange: BroadExchangeData) => {
 
         // Convert open interest and trade volume to USD basis
         const openInterestUSD = exchange.open_interest_btc * bitcoinPrice;
         const tradeVolumeUSD = exchange.trade_volume_24h_btc * bitcoinPrice;
 
         // Update the exchange object with USD values
-        const updatedExchange: ExchangeData = {
+        const updatedExchange: BroadExchangeData = {
           ...exchange,
           open_interest_usd: openInterestUSD,
           trade_volume_24h_usd: tradeVolumeUSD,
         };
         exchangeMap.set(exchange.id, updatedExchange);
       });
-    console.log(exchangeMap);
     return exchangeMap;
   } catch (error) {
     console.error('Error fetching data:', error);

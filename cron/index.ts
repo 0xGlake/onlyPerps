@@ -5,6 +5,7 @@ import { getHyper } from "./hyper";
 import { getVertex } from "./vertex";
 import { getDrift } from "./drift";
 import { fetchCoinData, CoinData } from "./tokensData";
+import { fetchExchangeData, BroadExchangeData } from "./exchangesData";
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -110,26 +111,53 @@ async function storeTokenData(data: Record<string, CoinData>) {
   }
 }
 
+async function storeExchangeData(data: Map<string, BroadExchangeData>) {
+  const query = `
+    INSERT INTO onlyperpsexchanges (data)
+    VALUES ($1)
+  `;
+
+  const exchangeData: Record<string, Partial<BroadExchangeData>> = {};
+
+  for (const [exchangeId, exchangeDatum] of data.entries()) {
+    exchangeData[exchangeId] = {
+      open_interest_usd: exchangeDatum.open_interest_usd,
+      trade_volume_24h_usd: exchangeDatum.trade_volume_24h_usd,
+    };
+  }
+
+  const values = [JSON.stringify(exchangeData)];
+
+  try {
+    await client.query<QueryResult<any>>(query, values);
+  } catch (err) {
+    console.error('Error storing broader exchange data:', err);
+  }
+}
+
 export async function handler(event: any, context: any): Promise<void> {
   try {
     await client.connect();
     console.log('Connected to database');
 
-    const [data, tokenData] = await Promise.all([
+    const [data, tokenData, exchangeData] = await Promise.all([
       aggregate(),
       fetchCoinData(['aevo-exchange', 'rabbitx', 'dydx-chain', 'vertex-protocol', 'drift-protocol', 'jupiter-exchange-solana', 'gmx']).catch(err => {
         console.error('Error fetching token data:', err);
         return {};
       }),
+      fetchExchangeData(['aevo', 'vertex_protocol_derivatives', 'drift_protocol', 'hyperliquid', 'rabbitx', 'dydx_perpetual']),
     ]);
 
     await Promise.all([
       storeData(data),
       storeTokenData(tokenData),
+      storeExchangeData(exchangeData),
     ]);
 
-    console.log('Data stored in the onlyperps table');
+    console.log('Funding rate data stored in the onlyperps table');
     console.log('Token data stored in the onlyperpstokens table');
+    console.log('Exchange data stored in the onlyperpsexchanges table');
 
   } catch (err) {
     console.error('Error:', err);
@@ -142,3 +170,7 @@ export async function handler(event: any, context: any): Promise<void> {
     }
   }
 }
+
+// example usage
+
+handler(null, null);
