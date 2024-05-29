@@ -23,7 +23,7 @@ type AssetPriceData = {
 }
 
 async function getData(): Promise<ExchangeData[]> {
-  const response = await fetch(`http://localhost:3000/api/top10`);
+  const response = await fetch(`http://localhost:3000/api/fundingAndOI`);
   return await response.json();
 }
 
@@ -54,7 +54,6 @@ export default function Home() {
   const [currentAssetPrice, setCurrentAssetPrice] = useState<AssetPriceData[]>([]);
 
   const fetchData = async () => {
-    //if (data.length > 1) return;
     setIsLoading(true);
     try {
       const fetchedData = await getData();
@@ -78,7 +77,6 @@ export default function Home() {
   const memoizedFilteredData = useMemo(
     () => filterData(data, selectedOption), // the usememo action to perform
     [data, selectedOption]); // the dependencies that will trigger the usememo action
-
     
   return (
     <div className="bg-gray-900 min-h-screen text-white p-8">
