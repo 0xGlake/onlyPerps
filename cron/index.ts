@@ -155,9 +155,7 @@ export async function handler(event: any, context: any): Promise<void> {
       storeExchangeData(exchangeData),
     ]);
 
-    console.log('Funding rate data stored in the onlyperps table');
-    console.log('Token data stored in the onlyperpstokens table');
-    console.log('Exchange data stored in the onlyperpsexchanges table');
+    console.log('Data stored succesfully');
 
   } catch (err) {
     console.error('Error:', err);
@@ -172,5 +170,4 @@ export async function handler(event: any, context: any): Promise<void> {
 }
 
 // example usage
-
-handler(null, null);
+// handler(null, null);

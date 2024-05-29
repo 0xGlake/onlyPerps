@@ -19,6 +19,8 @@ const dydx_1 = require("./dydx");
 const hyper_1 = require("./hyper");
 const vertex_1 = require("./vertex");
 const drift_1 = require("./drift");
+const tokensData_1 = require("./tokensData");
+const exchangesData_1 = require("./exchangesData");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const pg_1 = __importDefault(require("pg"));
@@ -84,14 +86,70 @@ function storeData(data) {
         }
     });
 }
+function storeTokenData(data) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const query = `
+    INSERT INTO onlyperpstokens (data)
+    VALUES ($1)
+  `;
+        const tokenData = {};
+        for (const [tokenId, coinData] of Object.entries(data)) {
+            tokenData[tokenId] = {
+                current_price: coinData.current_price,
+                fully_diluted_valuation: coinData.fully_diluted_valuation,
+                market_cap: coinData.market_cap,
+            };
+        }
+        const values = [JSON.stringify(tokenData)];
+        try {
+            yield client.query(query, values);
+        }
+        catch (err) {
+            console.error('Error storing token data:', err);
+        }
+    });
+}
+function storeExchangeData(data) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const query = `
+    INSERT INTO onlyperpsexchanges (data)
+    VALUES ($1)
+  `;
+        const exchangeData = {};
+        for (const [exchangeId, exchangeDatum] of data.entries()) {
+            exchangeData[exchangeId] = {
+                open_interest_usd: exchangeDatum.open_interest_usd,
+                trade_volume_24h_usd: exchangeDatum.trade_volume_24h_usd,
+            };
+        }
+        const values = [JSON.stringify(exchangeData)];
+        try {
+            yield client.query(query, values);
+        }
+        catch (err) {
+            console.error('Error storing broader exchange data:', err);
+        }
+    });
+}
 function handler(event, context) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             yield client.connect();
             console.log('Connected to database');
-            const data = yield aggregate();
-            yield storeData(data);
-            console.log('Data stored in the onlyperps table');
+            const [data, tokenData, exchangeData] = yield Promise.all([
+                aggregate(),
+                (0, tokensData_1.fetchCoinData)(['aevo-exchange', 'rabbitx', 'dydx-chain', 'vertex-protocol', 'drift-protocol', 'jupiter-exchange-solana', 'gmx']).catch(err => {
+                    console.error('Error fetching token data:', err);
+                    return {};
+                }),
+                (0, exchangesData_1.fetchExchangeData)(['aevo', 'vertex_protocol_derivatives', 'drift_protocol', 'hyperliquid', 'rabbitx', 'dydx_perpetual']),
+            ]);
+            yield Promise.all([
+                storeData(data),
+                storeTokenData(tokenData),
+                storeExchangeData(exchangeData),
+            ]);
+            console.log('Data stored succesfully');
         }
         catch (err) {
             console.error('Error:', err);
@@ -108,3 +166,5 @@ function handler(event, context) {
     });
 }
 exports.handler = handler;
+// example usage
+// handler(null, null);
