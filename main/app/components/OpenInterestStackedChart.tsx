@@ -47,7 +47,7 @@ const OpenInterestChart: React.FC<Props> = ({ data, isBase, currentAssetPrice })
   const svgRef = useRef<SVGSVGElement>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
-  const containerRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
 
@@ -59,7 +59,7 @@ const OpenInterestChart: React.FC<Props> = ({ data, isBase, currentAssetPrice })
     const chartMargin = 80;
     const height = 275 - margin.top - margin.bottom - chartMargin;
 
-    const timestamps = data.map((d) => new Date(d.timestamp));
+    const timestamps = data.map((d) => new Date(d.timestamp.toString()));
     const exchanges = Object.keys(data[0]).filter(
       (key) => key !== 'id' && key !== 'timestamp'
     );
@@ -82,11 +82,11 @@ const OpenInterestChart: React.FC<Props> = ({ data, isBase, currentAssetPrice })
       assets.forEach((asset, index) => {
         
         const assetData = data.map((d) => ({
-          timestamp: new Date(d.timestamp),
+          timestamp: new Date(d.timestamp.toString()),
           ...exchanges.reduce(
             (acc, exchange) => ({
               ...acc,
-              [exchange]: parseFloat((d[exchange] as String)[asset]?.openInterest),
+              [exchange]: parseFloat((d[exchange])[asset]?.openInterest),
             }),
             {}
           ),
@@ -95,7 +95,7 @@ const OpenInterestChart: React.FC<Props> = ({ data, isBase, currentAssetPrice })
         const initialOpenInterest = exchanges.map(exchange => (data[0][exchange] as OpenInterestData)[asset]?.openInterest || '0');
 
         const sortedExchanges = exchanges
-          .map((exchange, index) => ({ exchange, openInterest: parseFloat(initialOpenInterest[index]) }))
+          .map((exchange, index) => ({ exchange, openInterest: parseFloat(initialOpenInterest[index])}))
           .sort((a, b) => b.openInterest - a.openInterest)
           .map(({ exchange }) => exchange);
                 
@@ -204,7 +204,7 @@ const OpenInterestChart: React.FC<Props> = ({ data, isBase, currentAssetPrice })
         
           if (d) {
             const closestDataPoint = d.reduce((closest, current) => {
-              return Math.abs(current.data.timestamp - timestamp) < Math.abs(closest.data.timestamp - timestamp)
+              return Math.abs(current.data.timestamp - timestamp.getTime()) < Math.abs(closest.data.timestamp - timestamp.getTime())
                 ? current
                 : closest;
             });

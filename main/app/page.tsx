@@ -68,16 +68,17 @@ export default function Home() {
   const [isBase, setIsBase] = useState(true)
   const [data, setData] = useState<ExchangeData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [filteredData, setFilteredData] = useState<ExchangeData[]>([]);
   const [currentAssetPrice, setCurrentAssetPrice] = useState<AssetPriceData[]>([]);
   const [tokenData, setTokenData] = useState<TokenData[]>([]);
 
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const fetchedData = await FundingRateData();
-      const assetPriceData = await getAssetPrice();
-      const tokenData = await getTokenData();
+      const [fetchedData, assetPriceData, tokenData] = await Promise.all([
+        FundingRateData(),
+        getAssetPrice(),
+        getTokenData()
+      ]);
       setData(fetchedData);
       setCurrentAssetPrice(assetPriceData);
       setTokenData(tokenData);
@@ -91,14 +92,10 @@ export default function Home() {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    setFilteredData(filterData(data, selectedOption));
-  }, [selectedOption, data]);
-
   const memoizedFilteredData = useMemo(
     () => filterData(data, selectedOption), // the usememo action to perform
     [data, selectedOption]); // the dependencies that will trigger the usememo action
-    
+
   return (
     <div className="bg-gray-900 min-h-screen text-white p-8">
       <h1 className="text-4xl font-bold mb-0 text-center">Funding Rate Heat Map</h1>

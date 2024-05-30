@@ -67,7 +67,7 @@ const Tooltip: React.FC<TooltipProps> = ({ show, content, position, isAPR }) => 
       <div>
         <strong>Funding Rate:</strong>{' '}
         {isAPR ? (
-          <>{(parseFloat(content.value) * 876000).toFixed(2)}%</>
+          <>{(content.value * 876000).toFixed(2)}%</>
         ) : (
           <>{content.value}</>
         )}
@@ -139,7 +139,7 @@ const Legend: React.FC<LegendProps> = ({ width, height, colorScale, colourScalar
 
 const FundingRateHeatMap: React.FC<FundingRateHeatMapProps> = ({ data, isAPR }) => {
   const svgRef = useRef(null);
-  const containerRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const [tooltipData, setTooltipData] = useState({
     show: false,
@@ -149,9 +149,8 @@ const FundingRateHeatMap: React.FC<FundingRateHeatMapProps> = ({ data, isAPR }) 
 
   useEffect(() => {
     if (!data || data.length === 0) return;
-
-    const margin = { top: 10, right: 90, bottom: 20, left: 85 };
     const containerRect = containerRef.current?.getBoundingClientRect();
+    const margin = { top: 10, right: 90, bottom: 20, left: 85 };
     const width = containerRect ? containerRect.width - margin.left - margin.right : 0;
     const height = 300 - margin.top - margin.bottom;
 
@@ -189,7 +188,7 @@ const FundingRateHeatMap: React.FC<FundingRateHeatMapProps> = ({ data, isAPR }) 
       .attr('dy', '0.35em')
       .style('font-size', '10px');
 
-      const timestamps = data.slice().reverse().map((d) => new Date(d.timestamp));
+      const timestamps = data.slice().reverse().map((d) => new Date(d.timestamp.toString()));
 
       const xScale = d3
         .scaleTime()
@@ -212,7 +211,7 @@ const FundingRateHeatMap: React.FC<FundingRateHeatMapProps> = ({ data, isAPR }) 
             const assetData = exchangeData?.[asset];
             if (assetData && assetData.fundingRate) {
               //console.log(parseFloat(assetData.fundingRate));
-              return parseFloat(assetData.fundingRate);
+              return parseFloat(assetData.fundingRate.toString());
             } else {
               //console.log("funding rate error", assetData, assetData?.fundingRate, exchange, exchangeData);
               return 0;
