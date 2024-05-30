@@ -25,11 +25,7 @@ type AssetPriceData = {
 }
 
 type Props = {
-  data: {
-    id: number;
-    timestamp: string;
-    [key: string]: OpenInterestData | number | string;
-  }[];
+  data: OpenInterestData[];
   isBase: boolean;
   currentAssetPrice: AssetPriceData[];
 };

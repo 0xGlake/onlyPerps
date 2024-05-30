@@ -1,12 +1,13 @@
 'use client';
 
+import { useState, useEffect, useMemo } from 'react';
+import '../app/styles/globals.css';
 import FundingRateHeatMap from '../app/components/FundingRateHeatMap';
 import OpenInterestChart from '../app/components/OpenInterestStackedChart';
-import '../app/styles/globals.css';
 import AprToggleSwitch from './components/AprToggleSwitch';
 import AssetBaseToggleSwitch from './components/AssetBaseToggleSwitch';
 import TimeDropDown from './components/TimeDropDown';
-import { useState, useEffect, useMemo } from 'react';
+import FullyDillutedValue from './components/FullyDillutedValue';
 
 type ExchangeData = {
   [key: string]: {
@@ -22,7 +23,19 @@ type AssetPriceData = {
   price: string;
 }
 
-async function getData(): Promise<ExchangeData[]> {
+type TokenData = {
+  id: number;
+  timestamp: string;
+  data: {
+    [exchangeKey: string]: {
+      fully_diluted_valuation : number;
+      current_price : number;
+      market_cap : number;
+    };
+  };
+};
+
+async function FundingRateData(): Promise<ExchangeData[]> {
   const response = await fetch(`http://localhost:3000/api/fundingAndOI`);
   return await response.json();
 }
@@ -30,6 +43,11 @@ async function getData(): Promise<ExchangeData[]> {
 async function getAssetPrice(): Promise<AssetPriceData[]> {
   // todo: make the fetch more general and not hardcoded
   const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbols=[%22BTCUSDT%22,%22ETHUSDT%22,%22SOLUSDT%22]`);
+  return await response.json();
+}
+
+async function getTokenData(): Promise<TokenData[]> {
+  const response = await fetch(`http://localhost:3000/api/tokens`);
   return await response.json();
 }
 
@@ -52,14 +70,17 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [filteredData, setFilteredData] = useState<ExchangeData[]>([]);
   const [currentAssetPrice, setCurrentAssetPrice] = useState<AssetPriceData[]>([]);
+  const [tokenData, setTokenData] = useState<TokenData[]>([]);
 
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const fetchedData = await getData();
+      const fetchedData = await FundingRateData();
       const assetPriceData = await getAssetPrice();
+      const tokenData = await getTokenData();
       setData(fetchedData);
       setCurrentAssetPrice(assetPriceData);
+      setTokenData(tokenData);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -100,6 +121,8 @@ export default function Home() {
             <AssetBaseToggleSwitch isBase={isBase} setIsBase={setIsBase}/>
           </div>
           <OpenInterestChart data={memoizedFilteredData} isBase={isBase} currentAssetPrice={currentAssetPrice}/>
+          <h1 className="text-4xl font-bold mt-8 mb-4 text-center">Fully Dilluted Value</h1>
+          <FullyDillutedValue data={tokenData} />
         </>
       )}
     </div>
