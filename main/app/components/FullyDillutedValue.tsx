@@ -53,8 +53,10 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data }) => {
       .y((d) => yScale(d.fully_diluted_valuation));
 
     const exchanges = Object.keys(data[0].data);
+    const alphaSortedExchanges = exchanges.sort((a, b) => a.localeCompare(b));
 
-    const colors = d3.scaleOrdinal(d3.schemeCategory10);
+    const colors = d3.scaleOrdinal(d3.schemeCategory10).domain(alphaSortedExchanges);
+
 
     exchanges.forEach((exchange, i) => {
       const exchangeData = data.map((d) => ({
@@ -66,7 +68,7 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data }) => {
         .append('path')
         .datum(exchangeData)
         .attr('fill', 'none')
-        .attr('stroke', colors(i.toString()))
+        .attr('stroke', colors(exchange))
         .attr('stroke-width', 1.5)
         .attr('d', line);
     });
@@ -77,6 +79,82 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data }) => {
       .call(d3.axisBottom(xScale));
 
     svg.append('g').call(d3.axisLeft(yScale));
+    
+    const legend = svg
+      .append('g')
+      .attr('transform', `translate(${width + 20}, 0)`);
+
+    legend
+      .selectAll('rect')
+      .data(alphaSortedExchanges)
+      .join('rect')
+      .attr('y', (d, i) => i * 40)
+      .attr('width', 15)
+      .attr('height', 15)
+      .attr('fill', (d) => colors(d));
+
+    legend
+      .selectAll('text')
+      .data(alphaSortedExchanges)
+      .join('text')
+      .attr('x', 20)
+      .attr('y', (d, i) => i * 40 + 11)
+      .text((d) => d.replace(/-(exchange|protocol|chain|solana)/gi, '').toUpperCase())
+      .attr('font-size', '12px')
+      .attr('fill', 'white')
+      const tooltip = d3.select(containerRef.current)
+      .append('div')
+      .attr('class', 'absolute bg-black bg-opacity-80 text-white p-2 pointer-events-none rounded text-xs')
+      .style('display', 'none');
+
+    const verticalLine = svg.append('line')
+      .attr('stroke', 'white')
+      .attr('stroke-width', 1)
+      .attr('y1', 0)
+      .attr('y2', height)
+      .style('display', 'none');
+
+    svg.append('rect')
+      .attr('width', width)
+      .attr('height', height)
+      .attr('fill', 'none')
+      .attr('pointer-events', 'all')
+      .on('mousemove', (event) => {
+        const [mouseX] = d3.pointer(event);
+        const hoveredDate = xScale.invert(mouseX);
+        const closestDataPoint = data.reduce((prev, curr) => {
+          return (Math.abs(new Date(curr.timestamp).getTime() - hoveredDate.getTime()) < Math.abs(new Date(prev.timestamp).getTime() - hoveredDate.getTime()) ? curr : prev);
+        });
+
+        verticalLine
+          .attr('x1', mouseX)
+          .attr('x2', mouseX)
+          .style('display', 'block');
+
+        tooltip
+          .style('left', `${event.pageX + 10}px`)
+          .style('top', `${event.pageY}px`)
+          .style('display', 'block')
+          .html(() => {
+            const sortedExchanges = exchanges.sort((a, b) => 
+              closestDataPoint.data[b].fully_diluted_valuation - closestDataPoint.data[a].fully_diluted_valuation
+            );
+          
+            return `
+              ${sortedExchanges.map(exchange => `
+                <div><strong>${exchange.replace(/-(exchange|protocol|chain|solana)/gi, '').toUpperCase()}:</strong> ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(closestDataPoint.data[exchange].fully_diluted_valuation)}</div>
+              `).join('')}
+              <div style="margin-top: 10px;">
+                <strong>Timestamp:</strong> ${new Date(closestDataPoint.timestamp).toLocaleString()}
+              </div>
+            `;
+          });
+      })
+      .on('mouseout', () => {
+        verticalLine.style('display', 'none');
+        tooltip.style('display', 'none');
+      });
+
   }, [data]);
 
   return (

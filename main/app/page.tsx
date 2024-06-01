@@ -112,12 +112,12 @@ export default function Home() {
         </div>
       ) : (
         <>
-          <FundingRateHeatMap data={memoizedFilteredData} isAPR={isAPR}/>
+          {/* <FundingRateHeatMap data={memoizedFilteredData} isAPR={isAPR}/>
           <h1 className="text-4xl font-bold mt-8 mb-4 text-center">Open Interest Stacked Chart</h1>
           <div className='flex justify-center m-5 space-x-5'>
             <AssetBaseToggleSwitch isBase={isBase} setIsBase={setIsBase}/>
           </div>
-          <OpenInterestChart data={memoizedFilteredData} isBase={isBase} currentAssetPrice={currentAssetPrice}/>
+          <OpenInterestChart data={memoizedFilteredData} isBase={isBase} currentAssetPrice={currentAssetPrice}/> */}
           <h1 className="text-4xl font-bold mt-8 mb-4 text-center">Fully Dilluted Value</h1>
           <FullyDillutedValue data={tokenData} />
         </>

@@ -7,7 +7,7 @@ export async function GET(request: Request) {
     `SELECT *
     FROM onlyperpstokens
     ORDER BY id DESC
-    LIMIT 10;`);
+    LIMIT 192;`);
     return NextResponse.json(rows);
   } catch (error) {
     console.error('Error fetching data from Neon:', error);
