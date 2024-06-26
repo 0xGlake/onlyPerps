@@ -7,7 +7,7 @@ import OpenInterestChart from '../app/components/OpenInterestStackedChart';
 import AprToggleSwitch from './components/AprToggleSwitch';
 import AssetBaseToggleSwitch from './components/AssetBaseToggleSwitch';
 import TimeDropDown from './components/TimeDropDown';
-import FullyDillutedValue from './components/FullyDillutedValue';
+import TokenGraph from './components/TokenGraph';
 import LogarithmicOrLinearScaleToken from './components/LogarithmicOrLinearScaleToken';
 
 type ExchangeData = {
@@ -127,7 +127,7 @@ export default function Home() {
           <div className='flex justify-center m-5 space-x-5'>
             <LogarithmicOrLinearScaleToken isLogarithmic={isLogarithmic} setIsLogarithmic={setIsLogarithmic} />
           </div>
-          <FullyDillutedValue data={tokenData} isLogarithmic={isLogarithmic} />
+          <TokenGraph data={tokenData} isLogarithmic={isLogarithmic} />
           </>
       )}
     </div>

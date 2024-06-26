@@ -32,7 +32,7 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
     const containerRect = containerRef.current?.getBoundingClientRect();
     const margin = { top: 10, right: 90, bottom: 20, left: 85 };
     const width = containerRect ? containerRect.width - margin.left - margin.right : 0;
-    const height = 650 - margin.top - margin.bottom;
+    const height = 350 - margin.top - margin.bottom;
 
     const svg = d3
       .select(svgRef.current)
@@ -52,46 +52,54 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
     const allValues = data.flatMap(d => Object.values(d.data).map(exchange => exchange.fully_diluted_valuation));
     const minNonZeroValue = d3.min(allValues.filter(v => v > 0)) || 1;
     const maxValue = d3.max(allValues) || 1;
-
+    
+    const formatNumber = (value: number) => {
+      return new Intl.NumberFormat('en-US').format(value);
+    };
+  
     if (isLogarithmic) {
-      yScale = d3
-        .scaleLog()
+      yScale = d3.scaleLog()
         .domain([minNonZeroValue, maxValue])
         .range([height, 0])
         .nice();
-
+    
+      const logBase = 10;
+      const minExponent = Math.floor(Math.log10(minNonZeroValue));
+      const maxExponent = Math.ceil(Math.log10(maxValue));
+    
+      let tickValues = [];
+      for (let exp = minExponent; exp <= maxExponent; exp++) {
+        tickValues.push(Math.pow(logBase, exp));
+      }
+    
       yAxis = d3.axisLeft(yScale)
+        .tickValues(tickValues)
         .tickFormat((d) => {
-          const log10 = Math.log10(+d);
-          if (Math.abs(Math.round(log10) - log10) < 1e-6) {
-            return d3.format(".0s")(+d);
-          }
-          return "";
-        })
-        .ticks(10);
+          const value = +d;
+          return value.toLocaleString('en-US', {useGrouping: true, maximumFractionDigits: 0});
+        });
     } else {
       yScale = d3
         .scaleLinear()
         .domain([0, maxValue])
         .range([height, 0])
         .nice();
-
+  
       yAxis = d3.axisLeft(yScale)
-        .tickFormat(d3.format(".2s"))
-        .ticks(10);
+        .tickFormat(d => formatNumber(+d));
     }
-      
+        
     // Add y-axis
     svg.append('g')
       .attr('class', 'y-axis')
       .call(yAxis)
       .call(g => g.select(".domain").remove());
-
+  
     // Add grid lines
     const yGridLines = isLogarithmic 
-      ? yScale.ticks(10).filter(tick => Number.isInteger(Math.log10(tick)))
-      : yScale.ticks(10);
-
+      ? yScale.ticks().filter(tick => Number.isInteger(Math.log10(tick)))
+      : yScale.ticks();
+  
     svg.selectAll('grid-line')
       .data(yGridLines)
       .enter()
@@ -101,7 +109,8 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
       .attr('y1', d => yScale(d))
       .attr('y2', d => yScale(d))
       .attr('stroke', 'white')
-      .attr('stroke-opacity', 0.1);  
+      .attr('stroke-opacity', 0.2);
+  
 
     const line = d3
       .line<{ timestamp: string; fully_diluted_valuation: number }>()
