@@ -16,19 +16,23 @@ type TokenData = {
 
 type FullyDillutedValueProps = {
   data: TokenData;
+  isLogarithmic: boolean;
 };
 
-const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data }) => {
+const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarithmic } ) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (data.length === 0) return;
 
+    d3.select(svgRef.current).selectAll("*").remove();
+
+
     const containerRect = containerRef.current?.getBoundingClientRect();
     const margin = { top: 10, right: 90, bottom: 20, left: 85 };
     const width = containerRect ? containerRect.width - margin.left - margin.right : 0;
-    const height = 350 - margin.top - margin.bottom;
+    const height = 650 - margin.top - margin.bottom;
 
     const svg = d3
       .select(svgRef.current)
@@ -42,10 +46,62 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data }) => {
       .domain(d3.extent(data, (d) => new Date(d.timestamp)) as [Date, Date])
       .range([0, width]);
 
-    const yScale = d3
-      .scaleLinear()
-      .domain([0, d3.max(data, (d) => Math.max(...Object.values(d.data).map((exchange) => exchange.fully_diluted_valuation))) as number])
-      .range([height, 0]);
+    let yScale: d3.ScaleLogarithmic<number, number> | d3.ScaleLinear<number, number>;
+    let yAxis: d3.Axis<d3.NumberValue>;
+
+    const allValues = data.flatMap(d => Object.values(d.data).map(exchange => exchange.fully_diluted_valuation));
+    const minNonZeroValue = d3.min(allValues.filter(v => v > 0)) || 1;
+    const maxValue = d3.max(allValues) || 1;
+
+    if (isLogarithmic) {
+      yScale = d3
+        .scaleLog()
+        .domain([minNonZeroValue, maxValue])
+        .range([height, 0])
+        .nice();
+
+      yAxis = d3.axisLeft(yScale)
+        .tickFormat((d) => {
+          const log10 = Math.log10(+d);
+          if (Math.abs(Math.round(log10) - log10) < 1e-6) {
+            return d3.format(".0s")(+d);
+          }
+          return "";
+        })
+        .ticks(10);
+    } else {
+      yScale = d3
+        .scaleLinear()
+        .domain([0, maxValue])
+        .range([height, 0])
+        .nice();
+
+      yAxis = d3.axisLeft(yScale)
+        .tickFormat(d3.format(".2s"))
+        .ticks(10);
+    }
+      
+    // Add y-axis
+    svg.append('g')
+      .attr('class', 'y-axis')
+      .call(yAxis)
+      .call(g => g.select(".domain").remove());
+
+    // Add grid lines
+    const yGridLines = isLogarithmic 
+      ? yScale.ticks(10).filter(tick => Number.isInteger(Math.log10(tick)))
+      : yScale.ticks(10);
+
+    svg.selectAll('grid-line')
+      .data(yGridLines)
+      .enter()
+      .append('line')
+      .attr('x1', 0)
+      .attr('x2', width)
+      .attr('y1', d => yScale(d))
+      .attr('y2', d => yScale(d))
+      .attr('stroke', 'white')
+      .attr('stroke-opacity', 0.1);  
 
     const line = d3
       .line<{ timestamp: string; fully_diluted_valuation: number }>()
@@ -102,6 +158,7 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data }) => {
       .text((d) => d.replace(/-(exchange|protocol|chain|solana)/gi, '').toUpperCase())
       .attr('font-size', '12px')
       .attr('fill', 'white')
+    
       const tooltip = d3.select(containerRef.current)
       .append('div')
       .attr('class', 'absolute bg-black bg-opacity-80 text-white p-2 pointer-events-none rounded text-xs')
@@ -139,10 +196,9 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data }) => {
             const sortedExchanges = exchanges.sort((a, b) => 
               closestDataPoint.data[b].fully_diluted_valuation - closestDataPoint.data[a].fully_diluted_valuation
             );
-          
             return `
               ${sortedExchanges.map(exchange => `
-                <div><strong>${exchange.replace(/-(exchange|protocol|chain|solana)/gi, '').toUpperCase()}:</strong> ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(closestDataPoint.data[exchange].fully_diluted_valuation)}</div>
+                <div><strong style="color: ${colors(exchange)}">${exchange.replace(/-(exchange|protocol|chain|solana)/gi, '').toUpperCase()}:</strong> ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(closestDataPoint.data[exchange].fully_diluted_valuation)}</div>
               `).join('')}
               <div style="margin-top: 10px;">
                 <strong>Timestamp:</strong> ${new Date(closestDataPoint.timestamp).toLocaleString()}
@@ -155,7 +211,7 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data }) => {
         tooltip.style('display', 'none');
       });
 
-  }, [data]);
+  }, [data, isLogarithmic]);
 
   return (
     <div className="w-full" ref={containerRef}>

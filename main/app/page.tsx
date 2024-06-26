@@ -8,6 +8,7 @@ import AprToggleSwitch from './components/AprToggleSwitch';
 import AssetBaseToggleSwitch from './components/AssetBaseToggleSwitch';
 import TimeDropDown from './components/TimeDropDown';
 import FullyDillutedValue from './components/FullyDillutedValue';
+import LogarithmicOrLinearScaleToken from './components/LogarithmicOrLinearScaleToken';
 
 type ExchangeData = {
   [key: string]: {
@@ -55,7 +56,9 @@ function filterData(data: ExchangeData[], selectedOption: string): ExchangeData[
   const timeframes: { [key: string]: number } = {
     '1-Day': 96,
     '3-Days': 96*3,
-    '7-Days': 96*7
+    '7-Days': 96*7,
+    // '1-Month': 96*30,
+    // '3-Months': 96*90,
   };
 
   const timeframe = timeframes[selectedOption];
@@ -66,6 +69,7 @@ export default function Home() {
   const [selectedOption, setSelectedOption] = useState('7-Days');
   const [isAPR, setIsAPR] = useState(true)
   const [isBase, setIsBase] = useState(true)
+  const [isLogarithmic, setIsLogarithmic] = useState(false);
   const [data, setData] = useState<ExchangeData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentAssetPrice, setCurrentAssetPrice] = useState<AssetPriceData[]>([]);
@@ -94,7 +98,8 @@ export default function Home() {
 
   const memoizedFilteredData = useMemo(
     () => filterData(data, selectedOption), // the usememo action to perform
-    [data, selectedOption]); // the dependencies that will trigger the usememo action
+    [data, selectedOption]
+  ); // the dependencies that will trigger the usememo action
 
   return (
     <div className="bg-gray-900 min-h-screen text-white p-8">
@@ -112,15 +117,18 @@ export default function Home() {
         </div>
       ) : (
         <>
-          {/* <FundingRateHeatMap data={memoizedFilteredData} isAPR={isAPR}/>
+          <FundingRateHeatMap data={memoizedFilteredData} isAPR={isAPR}/>
           <h1 className="text-4xl font-bold mt-8 mb-4 text-center">Open Interest Stacked Chart</h1>
           <div className='flex justify-center m-5 space-x-5'>
             <AssetBaseToggleSwitch isBase={isBase} setIsBase={setIsBase}/>
           </div>
-          <OpenInterestChart data={memoizedFilteredData} isBase={isBase} currentAssetPrice={currentAssetPrice}/> */}
+          <OpenInterestChart data={memoizedFilteredData} isBase={isBase} currentAssetPrice={currentAssetPrice}/>
           <h1 className="text-4xl font-bold mt-8 mb-4 text-center">Fully Dilluted Value</h1>
-          <FullyDillutedValue data={tokenData} />
-        </>
+          <div className='flex justify-center m-5 space-x-5'>
+            <LogarithmicOrLinearScaleToken isLogarithmic={isLogarithmic} setIsLogarithmic={setIsLogarithmic} />
+          </div>
+          <FullyDillutedValue data={tokenData} isLogarithmic={isLogarithmic} />
+          </>
       )}
     </div>
   );
