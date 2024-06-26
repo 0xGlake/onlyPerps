@@ -11,7 +11,6 @@ const LogarithmicOrLinearScaleToken: React.FC<LogarithmicOrLinearScaleTokenProps
   const handleCheckboxChange = () => {
     setIsLogarithmic(!isLogarithmic)
   }
-
   return (
     <>
       <label className='themeSwitcherTwo shadow-card relative inline-flex cursor-pointer select-none items-center justify-center rounded-md bg-white p-1 hover:bg-gray-300'>
@@ -26,7 +25,22 @@ const LogarithmicOrLinearScaleToken: React.FC<LogarithmicOrLinearScaleTokenProps
             !isLogarithmic ? 'text-white bg-[#3e538d]' : 'text-gray-500'
           }`}
         >
-          <svg className={`mr-1.5 ${!isLogarithmic ? 'stroke-current text-white' : 'stroke-current text-gray-500'}`} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="2" y1="20" x2="22" y2="20"></line><line x1="2" y1="4" x2="22" y2="4"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg>
+          <svg 
+            className={`mr-1.5 ${!isLogarithmic ? 'stroke-current text-white' : 'stroke-current text-gray-500'}`} 
+            xmlns="http://www.w3.org/2000/svg" 
+            width="20" 
+            height="20" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2.5" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <line x1="3" y1="21" x2="21" y2="21" />
+            <line x1="3" y1="21" x2="3" y2="3" />
+            <line x1="3" y1="21" x2="21" y2="3" />
+          </svg>
           Linear
         </span>
         <span
@@ -34,12 +48,28 @@ const LogarithmicOrLinearScaleToken: React.FC<LogarithmicOrLinearScaleTokenProps
             isLogarithmic ? 'text-white bg-[#3e538d]' : 'text-gray-500'
           }`}
         >
-          <svg className={`mr-1.5 ${isLogarithmic ? 'stroke-current text-white' : 'stroke-current text-gray-500'}`} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 2v20h20"></path><path d="M2 20l7-8 4 4 7-8"></path></svg>
+          <svg 
+            className={`mr-1.5 ${isLogarithmic ? 'stroke-current text-white' : 'stroke-current text-gray-500'}`} 
+            xmlns="http://www.w3.org/2000/svg" 
+            width="20" 
+            height="20" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2.5" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <line x1="3" y1="21" x2="21" y2="21" />
+            <line x1="3" y1="21" x2="3" y2="3" />
+            <path d="M3 21C7 14 13 7 21 3" />
+          </svg>
           Logarithmic
         </span>
       </label>
     </>
-  )
+  );
+
 };
 
 export default LogarithmicOrLinearScaleToken;

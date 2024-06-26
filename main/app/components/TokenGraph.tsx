@@ -52,11 +52,11 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
     const allValues = data.flatMap(d => Object.values(d.data).map(exchange => exchange.fully_diluted_valuation));
     const minNonZeroValue = d3.min(allValues.filter(v => v > 0)) || 1;
     const maxValue = d3.max(allValues) || 1;
-    
+
     const formatNumber = (value: number) => {
       return `$${new Intl.NumberFormat('en-US').format(value)}`;
     };
-  
+
     if (isLogarithmic) {
       yScale = d3.scaleLog()
         .domain([minNonZeroValue, maxValue])
@@ -123,15 +123,15 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
     const colors = d3.scaleOrdinal(d3.schemeCategory10).domain(alphaSortedExchanges);
     
     const defs = svg.append('defs');
-
+    
     // Create a filter for the shadow effect
     const shadowFilter = defs.append('filter')
-      .attr('id', 'shadow-filter')
-      .attr('filterUnits', 'userSpaceOnUse')
-      .attr('width', '300%')
-      .attr('height', '300%')
-      .attr('x', '-100%')
-      .attr('y', '-100%');  
+    .attr('id', 'shadow-filter')
+    .attr('filterUnits', 'userSpaceOnUse')
+    .attr('width', '300%')
+    .attr('height', '300%')
+    .attr('x', '-100%')
+    .attr('y', '-100%');  
     
     shadowFilter.append('feGaussianBlur')
       .attr('in', 'SourceAlpha')
