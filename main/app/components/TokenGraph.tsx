@@ -54,7 +54,7 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
     const maxValue = d3.max(allValues) || 1;
     
     const formatNumber = (value: number) => {
-      return new Intl.NumberFormat('en-US').format(value);
+      return `$${new Intl.NumberFormat('en-US').format(value)}`;
     };
   
     if (isLogarithmic) {
@@ -213,7 +213,7 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
         .attr('fill', 'none')
         // .attr('stroke', colors(exchange))
         .attr('stroke', 'black')
-        .attr('stroke-width', 6)
+        .attr('stroke-width', 5)
         .attr('stroke-opacity', 0.35)
         .attr('filter', 'url(#shadow-filter)')
         .attr('d', line)
@@ -234,8 +234,6 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
       .attr('transform', `translate(0,${height})`)
       .call(d3.axisBottom(xScale));
 
-    svg.append('g').call(d3.axisLeft(yScale));
-    
     const legend = svg
       .append('g')
       .attr('transform', `translate(${width + 20}, 0)`);
