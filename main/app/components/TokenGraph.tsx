@@ -70,14 +70,16 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
       let tickValues = [];
       for (let exp = minExponent; exp <= maxExponent; exp++) {
         tickValues.push(Math.pow(logBase, exp));
+        if (exp < maxExponent) {
+          tickValues.push(Math.pow(logBase, exp) * 2);
+          tickValues.push(Math.pow(logBase, exp) * 5);
+        }
       }
-    
+
       yAxis = d3.axisLeft(yScale)
-        .tickValues(tickValues)
-        .tickFormat((d) => {
-          const value = +d;
-          return value.toLocaleString('en-US', {useGrouping: true, maximumFractionDigits: 0});
-        });
+        .tickFormat(d => formatNumber(+d))
+        .tickValues(tickValues);
+
     } else {
       yScale = d3
         .scaleLinear()
@@ -87,13 +89,12 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
   
       yAxis = d3.axisLeft(yScale)
         .tickFormat(d => formatNumber(+d));
-    }
-        
-    // Add y-axis
+    }      
+
     svg.append('g')
       .attr('class', 'y-axis')
-      .call(yAxis)
-      .call(g => g.select(".domain").remove());
+      .call(yAxis);
+
   
     // Add grid lines
     const yGridLines = isLogarithmic 
@@ -110,7 +111,6 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
       .attr('y2', d => yScale(d))
       .attr('stroke', 'white')
       .attr('stroke-opacity', 0.2);
-  
 
     const line = d3
       .line<{ timestamp: string; fully_diluted_valuation: number }>()
@@ -121,14 +121,101 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
     const alphaSortedExchanges = exchanges.sort((a, b) => a.localeCompare(b));
 
     const colors = d3.scaleOrdinal(d3.schemeCategory10).domain(alphaSortedExchanges);
+    
+    const defs = svg.append('defs');
 
-
+    // Create a filter for the shadow effect
+    const shadowFilter = defs.append('filter')
+      .attr('id', 'shadow-filter')
+      .attr('filterUnits', 'userSpaceOnUse')
+      .attr('width', '200%')
+      .attr('height', '200%');
+    
+    shadowFilter.append('feGaussianBlur')
+      .attr('in', 'SourceAlpha')
+      .attr('stdDeviation', 3)
+      .attr('result', 'blur');
+    
+    shadowFilter.append('feOffset')
+      .attr('in', 'blur')
+      .attr('dx', 0)
+      .attr('dy', 2)
+      .attr('result', 'offsetBlur');
+    
+    shadowFilter.append('feComponentTransfer')
+      .append('feFuncA')
+      .attr('type', 'linear')
+      .attr('slope', 0.2);
+    
+    const feMerge = shadowFilter.append('feMerge');
+    feMerge.append('feMergeNode')
+      .attr('in', 'offsetBlur');
+    feMerge.append('feMergeNode')
+      .attr('in', 'SourceGraphic');
+    
+    const area = d3.area<{ timestamp: string; fully_diluted_valuation: number }>()
+      .x((d) => xScale(new Date(d.timestamp)))
+      .y0(height)
+      .y1((d) => yScale(d.fully_diluted_valuation));
+      
     exchanges.forEach((exchange, i) => {
       const exchangeData = data.map((d) => ({
         timestamp: d.timestamp,
         fully_diluted_valuation: d.data[exchange].fully_diluted_valuation,
       }));
-
+    
+      const minY = d3.min(exchangeData, d => yScale(d.fully_diluted_valuation)) || 0;
+      const maxY = d3.max(exchangeData, d => yScale(d.fully_diluted_valuation)) || height;
+      
+      // Calculate the range of the line
+      const lineRange = Math.abs(maxY - minY);
+      
+      // Add an offset to extend the gradient beyond the line's range
+      const offset = lineRange * 0.5; // You can adjust this factor
+    
+      const gradient = defs.append('linearGradient')
+        .attr('id', `line-gradient-${i}`)
+        .attr('gradientUnits', 'userSpaceOnUse')
+        .attr('x1', 0)
+        .attr('y1', Math.max(maxY + offset, height)) // Ensure it doesn't go below the chart
+        .attr('x2', 0)
+        .attr('y2', Math.min(minY - offset, 0)); // Ensure it doesn't go above the chart
+    
+      gradient.append('stop')
+        .attr('offset', '0%')
+        .attr('stop-color', colors(exchange))
+        .attr('stop-opacity', 0.001);
+    
+      gradient.append('stop')
+        .attr('offset', '80%') // Add a middle stop for more control
+        .attr('stop-color', colors(exchange))
+        .attr('stop-opacity', 0.1);
+    
+      gradient.append('stop')
+        .attr('offset', '100%')
+        .attr('stop-color', colors(exchange))
+        .attr('stop-opacity', 0.8);
+    
+      // Draw gradient area
+      svg
+        .append('path')
+        .datum(exchangeData)
+        .attr('fill', `url(#line-gradient-${i})`)
+        .attr('d', area)
+        .attr('opacity', 1);
+    
+      // Draw shadow line
+      svg
+        .append('path')
+        .datum(exchangeData)
+        .attr('fill', 'none')
+        .attr('stroke', colors(exchange))
+        .attr('stroke-width',2)
+        .attr('stroke-opacity', 0.7)
+        .attr('filter', 'url(#shadow-filter)')
+        .attr('d', line);
+    
+      // Draw main line
       svg
         .append('path')
         .datum(exchangeData)
@@ -137,6 +224,10 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
         .attr('stroke-width', 1.5)
         .attr('d', line);
     });
+    
+    
+
+
 
     svg
       .append('g')
