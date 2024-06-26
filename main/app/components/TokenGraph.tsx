@@ -128,24 +128,26 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
     const shadowFilter = defs.append('filter')
       .attr('id', 'shadow-filter')
       .attr('filterUnits', 'userSpaceOnUse')
-      .attr('width', '200%')
-      .attr('height', '200%');
+      .attr('width', '300%')
+      .attr('height', '300%')
+      .attr('x', '-100%')
+      .attr('y', '-100%');  
     
     shadowFilter.append('feGaussianBlur')
       .attr('in', 'SourceAlpha')
-      .attr('stdDeviation', 3)
+      .attr('stdDeviation', 6)
       .attr('result', 'blur');
     
-    shadowFilter.append('feOffset')
+      shadowFilter.append('feOffset')
       .attr('in', 'blur')
       .attr('dx', 0)
-      .attr('dy', 2)
+      .attr('dy', 4)  // CHANGE: Added a small downward offset
       .attr('result', 'offsetBlur');
     
     shadowFilter.append('feComponentTransfer')
       .append('feFuncA')
       .attr('type', 'linear')
-      .attr('slope', 0.2);
+      .attr('slope', 0.5);
     
     const feMerge = shadowFilter.append('feMerge');
     feMerge.append('feMergeNode')
@@ -171,7 +173,7 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
       const lineRange = Math.abs(maxY - minY);
       
       // Add an offset to extend the gradient beyond the line's range
-      const offset = lineRange * 0.5; // You can adjust this factor
+      const offset = lineRange * 0.4; // You can adjust this factor
     
       const gradient = defs.append('linearGradient')
         .attr('id', `line-gradient-${i}`)
@@ -184,17 +186,17 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
       gradient.append('stop')
         .attr('offset', '0%')
         .attr('stop-color', colors(exchange))
-        .attr('stop-opacity', 0.001);
+        .attr('stop-opacity', 0.01);
     
       gradient.append('stop')
-        .attr('offset', '80%') // Add a middle stop for more control
+        .attr('offset', '45%') // Add a middle stop for more control
         .attr('stop-color', colors(exchange))
         .attr('stop-opacity', 0.1);
     
       gradient.append('stop')
         .attr('offset', '100%')
         .attr('stop-color', colors(exchange))
-        .attr('stop-opacity', 0.8);
+        .attr('stop-opacity', 0.75);
     
       // Draw gradient area
       svg
@@ -209,11 +211,13 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
         .append('path')
         .datum(exchangeData)
         .attr('fill', 'none')
-        .attr('stroke', colors(exchange))
-        .attr('stroke-width',2)
-        .attr('stroke-opacity', 0.7)
+        // .attr('stroke', colors(exchange))
+        .attr('stroke', 'black')
+        .attr('stroke-width', 6)
+        .attr('stroke-opacity', 0.35)
         .attr('filter', 'url(#shadow-filter)')
-        .attr('d', line);
+        .attr('d', line)
+        .attr('transform', 'translate(0, 3.5)');
     
       // Draw main line
       svg
@@ -221,13 +225,9 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
         .datum(exchangeData)
         .attr('fill', 'none')
         .attr('stroke', colors(exchange))
-        .attr('stroke-width', 1.5)
+        .attr('stroke-width', 2)
         .attr('d', line);
     });
-    
-    
-
-
 
     svg
       .append('g')
