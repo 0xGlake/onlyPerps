@@ -1,6 +1,7 @@
-// src/app/funding-rates/page.tsx
-
 'use client';
+
+// import '../app/styles/globals.css';
+import '../styles/globals.css';
 
 import { useState, useEffect } from 'react';
 import { useDataStore, fetchDataForPage } from '../stores/useDataStore';
