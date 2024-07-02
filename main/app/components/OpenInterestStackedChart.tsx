@@ -79,6 +79,32 @@ const OpenInterestChart: React.FC<Props> = ({ data, isBase, currentAssetPrice })
       
       const colorScale = d3.scaleOrdinal<string, string>().domain(exchanges).range(d3.schemeSet1);
       
+      const defs = svg.append('defs');
+
+      exchanges.forEach((exchange) => {
+        const gradient = defs.append('linearGradient')
+          .attr('id', `gradient-${exchange}`)
+          .attr('x1', '0%')
+          .attr('x2', '0%')
+          .attr('y1', '0%')
+          .attr('y2', '100%');
+  
+        gradient.append('stop')
+          .attr('offset', '0%')
+          .attr('stop-color', colorScale(exchange))
+          .attr('stop-opacity', 0.7);
+
+          gradient.append('stop')
+          .attr('offset', '40%')
+          .attr('stop-color', colorScale(exchange))
+          .attr('stop-opacity', 0.6);
+  
+        gradient.append('stop')
+          .attr('offset', '100%')
+          .attr('stop-color', colorScale(exchange))
+          .attr('stop-opacity', 0.10);
+      });
+  
       assets.forEach((asset, index) => {
         
         const assetData = data.map((d) => ({
@@ -136,7 +162,7 @@ const OpenInterestChart: React.FC<Props> = ({ data, isBase, currentAssetPrice })
 
         const filter = defs.append('filter')
           .attr('id', 'dropShadow')
-          .attr('x', '-20%')
+          .attr('x', '0%')
           .attr('y', '-20%')
           .attr('width', '200%')
           .attr('height', '200%');
@@ -152,7 +178,6 @@ const OpenInterestChart: React.FC<Props> = ({ data, isBase, currentAssetPrice })
           .append('g')
           .attr('transform', `translate(${margin.left},${margin.top + index * (height + margin.bottom + chartMargin)})`);
 
-
         chartGroup
         .selectAll('path.line')
         .data(stackedData)
@@ -160,8 +185,8 @@ const OpenInterestChart: React.FC<Props> = ({ data, isBase, currentAssetPrice })
         .attr('class', 'line')
         .attr('fill', 'none')
         .attr('stroke', (d) => colorScale(d.key))
-        .attr('stroke-width', 1.5)
-        .attr('opacity', 0.65)
+        .attr('stroke-width', 1)
+        .attr('opacity', 0.7)
         .attr('filter', 'url(#dropShadow)') 
         .attr('d', (d) => {
           const lineData: [number, number][] = d.map((point) => [
@@ -170,14 +195,13 @@ const OpenInterestChart: React.FC<Props> = ({ data, isBase, currentAssetPrice })
           ]);
           return d3.line()(lineData);
         });
-
+        
         chartGroup
         .selectAll('path.area')
         .data(stackedData)
         .join('path')
         .attr('class', 'area')
-        .attr('fill', (d) => colorScale(d.key))
-        .attr('fill-opacity', 0.80)
+        .attr('fill', (d) => `url(#gradient-${d.key})`) // Use gradient fill
         .attr('d', area)
         .on('mouseover', (event, d) => {
           const [x, y] = d3.pointer(event);

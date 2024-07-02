@@ -189,7 +189,7 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
         .attr('stop-opacity', 0.01);
     
       gradient.append('stop')
-        .attr('offset', '45%') // Add a middle stop for more control
+        .attr('offset', '45%')
         .attr('stop-color', colors(exchange))
         .attr('stop-opacity', 0.1);
     

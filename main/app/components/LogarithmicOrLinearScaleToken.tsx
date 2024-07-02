@@ -69,7 +69,6 @@ const LogarithmicOrLinearScaleToken: React.FC<LogarithmicOrLinearScaleTokenProps
       </label>
     </>
   );
-
 };
 
 export default LogarithmicOrLinearScaleToken;
