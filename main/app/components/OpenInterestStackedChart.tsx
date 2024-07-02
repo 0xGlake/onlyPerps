@@ -48,6 +48,7 @@ const OpenInterestChart: React.FC<Props> = ({ data, isBase, currentAssetPrice })
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [mouseX, setMouseX] = useState<number | null>(null);
 
   useEffect(() => {
 
@@ -177,6 +178,16 @@ const OpenInterestChart: React.FC<Props> = ({ data, isBase, currentAssetPrice })
         const chartGroup = svg
           .append('g')
           .attr('transform', `translate(${margin.left},${margin.top + index * (height + margin.bottom + chartMargin)})`);
+    
+        const verticalLine = chartGroup
+        .append('line')
+        .attr('class', 'vertical-line')
+        .attr('y1', 0)
+        .attr('y2', height)
+        .attr('stroke', 'white')
+        .attr('stroke-width', 1.5)
+        .attr('opacity', 0)
+        .style('pointer-events', 'none');
 
         chartGroup
         .selectAll('path.line')
@@ -207,6 +218,8 @@ const OpenInterestChart: React.FC<Props> = ({ data, isBase, currentAssetPrice })
           const [x, y] = d3.pointer(event);
           const timestamp = xScale.invert(x);
 
+          verticalLine.attr('opacity', 1);
+
           if (d) {
             const bisector = d3.bisector((d: { timestamp: Date }) => d.timestamp).left;
             const closestIndex = bisector(d, timestamp);
@@ -225,6 +238,9 @@ const OpenInterestChart: React.FC<Props> = ({ data, isBase, currentAssetPrice })
         .on('mousemove', (event, d) => {
           const [x, y] = d3.pointer(event);
           const timestamp = xScale.invert(x);
+
+          verticalLine.attr('x1', x).attr('x2', x);
+          setMouseX(x);
         
           if (d) {
             const closestDataPoint = d.reduce((closest, current) => {
@@ -247,6 +263,10 @@ const OpenInterestChart: React.FC<Props> = ({ data, isBase, currentAssetPrice })
         .on('mouseout', () => {
           setTooltipData(null);
           setTooltipPosition(null);
+          verticalLine.attr('opacity', 0);
+          setTooltipData(null);
+          setTooltipPosition(null);
+          setMouseX(null);  
         });
         
         chartGroup

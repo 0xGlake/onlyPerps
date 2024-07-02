@@ -1,4 +1,3 @@
-"use client";
 import React, { useRef, useEffect } from 'react';
 import * as d3 from 'd3';
 
@@ -7,9 +6,9 @@ type TokenData = {
   timestamp: string;
   data: {
     [exchangeKey: string]: {
-      fully_diluted_valuation : number;
-      current_price : number;
-      market_cap : number;
+      fully_diluted_valuation: number;
+      current_price: number;
+      market_cap: number;
     };
   };
 }[];
@@ -19,7 +18,7 @@ type FullyDillutedValueProps = {
   isLogarithmic: boolean;
 };
 
-const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarithmic } ) => {
+const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarithmic }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -27,7 +26,6 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
     if (data.length === 0) return;
 
     d3.select(svgRef.current).selectAll("*").remove();
-
 
     const containerRect = containerRef.current?.getBoundingClientRect();
     const margin = { top: 10, right: 90, bottom: 20, left: 85 };
@@ -79,7 +77,6 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
       yAxis = d3.axisLeft(yScale)
         .tickFormat(d => formatNumber(+d))
         .tickValues(tickValues);
-
     } else {
       yScale = d3
         .scaleLinear()
@@ -95,8 +92,6 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
       .attr('class', 'y-axis')
       .call(yAxis);
 
-  
-    // Add grid lines
     const yGridLines = isLogarithmic 
       ? yScale.ticks().filter(tick => Number.isInteger(Math.log10(tick)))
       : yScale.ticks();
@@ -124,24 +119,23 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
     
     const defs = svg.append('defs');
     
-    // Create a filter for the shadow effect
     const shadowFilter = defs.append('filter')
-    .attr('id', 'shadow-filter')
-    .attr('filterUnits', 'userSpaceOnUse')
-    .attr('width', '300%')
-    .attr('height', '300%')
-    .attr('x', '-100%')
-    .attr('y', '-100%');  
+      .attr('id', 'shadow-filter')
+      .attr('filterUnits', 'userSpaceOnUse')
+      .attr('width', '300%')
+      .attr('height', '300%')
+      .attr('x', '-100%')
+      .attr('y', '-100%');  
     
     shadowFilter.append('feGaussianBlur')
       .attr('in', 'SourceAlpha')
       .attr('stdDeviation', 6)
       .attr('result', 'blur');
     
-      shadowFilter.append('feOffset')
+    shadowFilter.append('feOffset')
       .attr('in', 'blur')
       .attr('dx', 0)
-      .attr('dy', 4)  // CHANGE: Added a small downward offset
+      .attr('dy', 4)
       .attr('result', 'offsetBlur');
     
     shadowFilter.append('feComponentTransfer')
@@ -166,52 +160,45 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
         fully_diluted_valuation: d.data[exchange].fully_diluted_valuation,
       }));
     
-      const minY = d3.min(exchangeData, d => yScale(d.fully_diluted_valuation)) || 0;
-      const maxY = d3.max(exchangeData, d => yScale(d.fully_diluted_valuation)) || height;
-      
-      // Calculate the range of the line
-      const lineRange = Math.abs(maxY - minY);
-      
-      // Add an offset to extend the gradient beyond the line's range
-      const offset = lineRange * 0.4; // You can adjust this factor
+      if (!isLogarithmic) {
+        const minY = d3.min(exchangeData, d => yScale(d.fully_diluted_valuation)) || 0;
+        const maxY = d3.max(exchangeData, d => yScale(d.fully_diluted_valuation)) || height;
+        
+        const lineRange = Math.abs(maxY - minY);
+        const offset = lineRange * 0.4;
     
-      const gradient = defs.append('linearGradient')
-        .attr('id', `line-gradient-${i}`)
-        .attr('gradientUnits', 'userSpaceOnUse')
-        .attr('x1', 0)
-        .attr('y1', Math.max(maxY + offset, height)) // Ensure it doesn't go below the chart
-        .attr('x2', 0)
-        .attr('y2', Math.min(minY - offset, 0)); // Ensure it doesn't go above the chart
+        const gradient = defs.append('linearGradient')
+          .attr('id', `line-gradient-${i}`)
+          .attr('gradientUnits', 'userSpaceOnUse')
+          .attr('x1', 0)
+          .attr('y1', Math.max(maxY + offset, height))
+          .attr('x2', 0)
+          .attr('y2', Math.min(minY - offset, 0));
     
-      gradient.append('stop')
-        .attr('offset', '0%')
-        .attr('stop-color', colors(exchange))
-        .attr('stop-opacity', 0.01);
+        gradient.append('stop')
+          .attr('offset', '0%')
+          .attr('stop-color', colors(exchange))
+          .attr('stop-opacity', 0);
     
-      gradient.append('stop')
-        .attr('offset', '45%')
-        .attr('stop-color', colors(exchange))
-        .attr('stop-opacity', 0.1);
+        gradient.append('stop')
+          .attr('offset', '100%')
+          .attr('stop-color', colors(exchange))
+          .attr('stop-opacity', 0.65);
     
-      gradient.append('stop')
-        .attr('offset', '100%')
-        .attr('stop-color', colors(exchange))
-        .attr('stop-opacity', 0.75);
-    
-      // Draw gradient area
-      svg
-        .append('path')
-        .datum(exchangeData)
-        .attr('fill', `url(#line-gradient-${i})`)
-        .attr('d', area)
-        .attr('opacity', 1);
+        // Draw gradient area only in linear mode
+        svg
+          .append('path')
+          .datum(exchangeData)
+          .attr('fill', `url(#line-gradient-${i})`)
+          .attr('d', area)
+          .attr('opacity', 1);
+      }
     
       // Draw shadow line
       svg
         .append('path')
         .datum(exchangeData)
         .attr('fill', 'none')
-        // .attr('stroke', colors(exchange))
         .attr('stroke', 'black')
         .attr('stroke-width', 2)
         .attr('stroke-opacity', 0.35)
@@ -257,7 +244,7 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
       .attr('font-size', '12px')
       .attr('fill', 'white')
     
-      const tooltip = d3.select(containerRef.current)
+    const tooltip = d3.select(containerRef.current)
       .append('div')
       .attr('class', 'absolute bg-black bg-opacity-80 text-white p-2 pointer-events-none rounded text-xs')
       .style('display', 'none');
