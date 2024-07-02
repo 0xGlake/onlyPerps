@@ -103,7 +103,7 @@ const OpenInterestChart: React.FC<Props> = ({ data, isBase, currentAssetPrice })
         gradient.append('stop')
           .attr('offset', '100%')
           .attr('stop-color', colorScale(exchange))
-          .attr('stop-opacity', 0.10);
+          .attr('stop-opacity', 0.2);
       });
   
       assets.forEach((asset, index) => {

@@ -196,10 +196,10 @@ const FundingRateHeatMap: React.FC<FundingRateHeatMapProps> = ({ data, isAPR }) 
       .join('rect')
       .attr('x', 0)
       .attr('y', d => yScale(`${d.asset}-${d.exchange}`)!)
-      .attr('width', cellWidth + 0.5)
+      .attr('width', cellWidth + 0.1)
       .attr('height', cellHeight)
       .attr('fill', d => colorScale(d.value))
-      .attr('fill-opacity', 1)
+      .attr('fill-opacity', 0.6)
       .on('mouseover', (event, d) => {
         setTooltipData({
           show: true,
