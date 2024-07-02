@@ -36,6 +36,11 @@ type TokenData = {
   };
 };
 
+type GraphData = {
+  timestamp: string;
+  [exchangeKey: string]: number | string;
+};
+
 async function FundingRateData(): Promise<ExchangeData[]> {
   const response = await fetch(`http://localhost:3000/api/fundingAndOI`);
   return await response.json();
@@ -75,6 +80,10 @@ export default function Home() {
   const [currentAssetPrice, setCurrentAssetPrice] = useState<AssetPriceData[]>([]);
   const [tokenData, setTokenData] = useState<TokenData[]>([]);
 
+  const [fullyDilutedValuationData, setFullyDilutedValuationData] = useState<GraphData[]>([]);
+  const [currentPriceData, setCurrentPriceData] = useState<GraphData[]>([]);
+  const [marketCapData, setMarketCapData] = useState<GraphData[]>([]);
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -86,6 +95,30 @@ export default function Home() {
       setData(fetchedData);
       setCurrentAssetPrice(assetPriceData);
       setTokenData(tokenData);
+
+      const fdvData: GraphData[] = [];
+      const priceData: GraphData[] = [];
+      const mcapData: GraphData[] = [];
+
+      tokenData.forEach((item) => {
+        const fdvItem: GraphData = { timestamp: item.timestamp };
+        const priceItem: GraphData = { timestamp: item.timestamp };
+        const mcapItem: GraphData = { timestamp: item.timestamp };
+
+        Object.entries(item.data).forEach(([exchange, values]) => {
+          fdvItem[exchange] = values.fully_diluted_valuation;
+          priceItem[exchange] = values.current_price;
+          mcapItem[exchange] = values.market_cap;
+        });
+
+        fdvData.push(fdvItem);
+        priceData.push(priceItem);
+        mcapData.push(mcapItem);
+      });
+
+      setFullyDilutedValuationData(fdvData);
+      setCurrentPriceData(priceData);
+      setMarketCapData(mcapData);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -123,11 +156,38 @@ export default function Home() {
             <AssetBaseToggleSwitch isBase={isBase} setIsBase={setIsBase}/>
           </div>
           <OpenInterestChart data={memoizedFilteredData} isBase={isBase} currentAssetPrice={currentAssetPrice}/>
+          {/*
           <h1 className="text-4xl font-bold mt-8 mb-4 text-center">Fully Dilluted Value</h1>
           <div className='flex justify-center m-5 space-x-5'>
             <LogarithmicOrLinearScaleToken isLogarithmic={isLogarithmic} setIsLogarithmic={setIsLogarithmic} />
           </div>
-          <TokenGraph data={tokenData} isLogarithmic={isLogarithmic} />
+          <TokenGraph data={tokenData} isLogarithmic={isLogarithmic} /> 
+          */}
+          <h1 className="text-4xl font-bold mt-8 mb-4 text-center">Token Metrics</h1>
+          <div className='flex justify-center m-5 space-x-5'>
+            <LogarithmicOrLinearScaleToken isLogarithmic={isLogarithmic} setIsLogarithmic={setIsLogarithmic} />
+          </div>
+          
+          <TokenGraph 
+            data={fullyDilutedValuationData} 
+            isLogarithmic={isLogarithmic} 
+            title="Fully Diluted Valuation"
+            valueKey="fully_diluted_valuation"
+          />
+          
+          {/* <TokenGraph 
+            data={currentPriceData} 
+            isLogarithmic={isLogarithmic} 
+            title="Current Price"
+            valueKey="current_price"
+          /> */}
+          
+          <TokenGraph 
+            data={marketCapData} 
+            isLogarithmic={isLogarithmic} 
+            title="Market Cap"
+            valueKey="market_cap"
+          />
           </>
       )}
     </div>

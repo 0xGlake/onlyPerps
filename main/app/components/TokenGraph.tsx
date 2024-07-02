@@ -1,24 +1,19 @@
 import React, { useRef, useEffect } from 'react';
 import * as d3 from 'd3';
 
-type TokenData = {
-  id: number;
+type DataPoint = {
   timestamp: string;
-  data: {
-    [exchangeKey: string]: {
-      fully_diluted_valuation: number;
-      current_price: number;
-      market_cap: number;
-    };
-  };
-}[];
-
-type FullyDillutedValueProps = {
-  data: TokenData;
-  isLogarithmic: boolean;
+  [exchangeKey: string]: number | string;
 };
 
-const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarithmic }) => {
+type TokenGraphProps = {
+  data: DataPoint[];
+  isLogarithmic: boolean;
+  title: string;
+  valueKey: string;
+};
+
+const TokenGraph: React.FC<TokenGraphProps> = ({ data, isLogarithmic, title, valueKey }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -28,7 +23,7 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
     d3.select(svgRef.current).selectAll("*").remove();
 
     const containerRect = containerRef.current?.getBoundingClientRect();
-    const margin = { top: 10, right: 90, bottom: 20, left: 85 };
+    const margin = { top: 50, right: 90, bottom: 30, left: 85 };
     const width = containerRect ? containerRect.width - margin.left - margin.right : 0;
     const height = 350 - margin.top - margin.bottom;
 
@@ -47,7 +42,9 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
     let yScale: d3.ScaleLogarithmic<number, number> | d3.ScaleLinear<number, number>;
     let yAxis: d3.Axis<d3.NumberValue>;
 
-    const allValues = data.flatMap(d => Object.values(d.data).map(exchange => exchange.fully_diluted_valuation));
+    const allValues = data.flatMap(d => Object.entries(d)
+      .filter(([key]) => key !== 'timestamp')
+      .map(([, value]) => Number(value)));
     const minNonZeroValue = d3.min(allValues.filter(v => v > 0)) || 1;
     const maxValue = d3.max(allValues) || 1;
 
@@ -108,11 +105,11 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
       .attr('stroke-opacity', 0.2);
 
     const line = d3
-      .line<{ timestamp: string; fully_diluted_valuation: number }>()
+      .line<{ timestamp: string; value: number }>()
       .x((d) => xScale(new Date(d.timestamp)))
-      .y((d) => yScale(d.fully_diluted_valuation));
+      .y((d) => yScale(d.value));
 
-    const exchanges = Object.keys(data[0].data);
+    const exchanges = Object.keys(data[0]).filter(key => key !== 'timestamp');
     const alphaSortedExchanges = exchanges.sort((a, b) => a.localeCompare(b));
 
     const colors = d3.scaleOrdinal(d3.schemeCategory10).domain(alphaSortedExchanges);
@@ -149,20 +146,20 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
     feMerge.append('feMergeNode')
       .attr('in', 'SourceGraphic');
     
-    const area = d3.area<{ timestamp: string; fully_diluted_valuation: number }>()
+    const area = d3.area<{ timestamp: string; value: number }>()
       .x((d) => xScale(new Date(d.timestamp)))
       .y0(height)
-      .y1((d) => yScale(d.fully_diluted_valuation));
+      .y1((d) => yScale(d.value));
       
     exchanges.forEach((exchange, i) => {
       const exchangeData = data.map((d) => ({
         timestamp: d.timestamp,
-        fully_diluted_valuation: d.data[exchange].fully_diluted_valuation,
+        value: Number(d[exchange]),
       }));
     
       if (!isLogarithmic) {
-        const minY = d3.min(exchangeData, d => yScale(d.fully_diluted_valuation)) || 0;
-        const maxY = d3.max(exchangeData, d => yScale(d.fully_diluted_valuation)) || height;
+        const minY = d3.min(exchangeData, d => yScale(d.value)) || 0;
+        const maxY = d3.max(exchangeData, d => yScale(d.value)) || height;
         
         const lineRange = Math.abs(maxY - minY);
         const offset = lineRange * 0.4;
@@ -279,11 +276,11 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
           .style('display', 'block')
           .html(() => {
             const sortedExchanges = exchanges.sort((a, b) => 
-              closestDataPoint.data[b].fully_diluted_valuation - closestDataPoint.data[a].fully_diluted_valuation
+              Number(closestDataPoint[b]) - Number(closestDataPoint[a])
             );
             return `
               ${sortedExchanges.map(exchange => `
-                <div><strong style="color: ${colors(exchange)}">${exchange.replace(/-(exchange|protocol|chain|solana)/gi, '').toUpperCase()}:</strong> ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(closestDataPoint.data[exchange].fully_diluted_valuation)}</div>
+                <div><strong style="color: ${colors(exchange)}">${exchange.replace(/-(exchange|protocol|chain|solana)/gi, '').toUpperCase()}:</strong> ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(closestDataPoint[exchange]))}</div>
               `).join('')}
               <div style="margin-top: 10px;">
                 <strong>Timestamp:</strong> ${new Date(closestDataPoint.timestamp).toLocaleString()}
@@ -296,7 +293,16 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
         tooltip.style('display', 'none');
       });
 
-  }, [data, isLogarithmic]);
+    // Add title
+    svg.append('text')
+      .attr('x', width / 2)
+      .attr('y', -margin.top / 2)
+      .attr('text-anchor', 'middle')
+      .style('font-size', '32px')
+      .style('fill', 'white')
+      .text(title);
+
+  }, [data, isLogarithmic, title, valueKey]);
 
   return (
     <div className="w-full" ref={containerRef}>
@@ -305,4 +311,4 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
   );
 };
 
-export default FullyDillutedValue;
+export default TokenGraph;
