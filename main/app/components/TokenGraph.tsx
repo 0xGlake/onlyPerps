@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 
 type DataPoint = {
   timestamp: string;
-  [exchangeKey: string]: number | string;
+  [exchangeKey: string]: number | string | null;
 };
 
 type TokenGraphProps = {
@@ -23,7 +23,7 @@ const TokenGraph: React.FC<TokenGraphProps> = ({ data, isLogarithmic, title, val
     d3.select(svgRef.current).selectAll("*").remove();
 
     const containerRect = containerRef.current?.getBoundingClientRect();
-    const margin = { top: 50, right: 90, bottom: 30, left: 85 };
+    const margin = { top: 50, right: 90, bottom: 50, left: 85 };
     const width = containerRect ? containerRect.width - margin.left - margin.right : 0;
     const height = 350 - margin.top - margin.bottom;
 
@@ -43,7 +43,7 @@ const TokenGraph: React.FC<TokenGraphProps> = ({ data, isLogarithmic, title, val
     let yAxis: d3.Axis<d3.NumberValue>;
 
     const allValues = data.flatMap(d => Object.entries(d)
-      .filter(([key]) => key !== 'timestamp')
+      .filter(([key, value]) => key !== 'timestamp' && value !== null)
       .map(([, value]) => Number(value)));
     const minNonZeroValue = d3.min(allValues.filter(v => v > 0)) || 1;
     const maxValue = d3.max(allValues) || 1;
@@ -105,9 +105,10 @@ const TokenGraph: React.FC<TokenGraphProps> = ({ data, isLogarithmic, title, val
       .attr('stroke-opacity', 0.2);
 
     const line = d3
-      .line<{ timestamp: string; value: number }>()
+      .line<{ timestamp: string; value: number | null }>()
       .x((d) => xScale(new Date(d.timestamp)))
-      .y((d) => yScale(d.value));
+      .y((d) => d.value !== null ? yScale(d.value) : yScale(0))
+      .defined(d => d.value !== null);
 
     const exchanges = Object.keys(data[0]).filter(key => key !== 'timestamp');
     const alphaSortedExchanges = exchanges.sort((a, b) => a.localeCompare(b));
@@ -146,20 +147,22 @@ const TokenGraph: React.FC<TokenGraphProps> = ({ data, isLogarithmic, title, val
     feMerge.append('feMergeNode')
       .attr('in', 'SourceGraphic');
     
-    const area = d3.area<{ timestamp: string; value: number }>()
+    const area = d3.area<{ timestamp: string; value: number | null }>()
       .x((d) => xScale(new Date(d.timestamp)))
       .y0(height)
-      .y1((d) => yScale(d.value));
+      .y1((d) => d.value !== null ? yScale(d.value) : yScale(0))
+      .defined(d => d.value !== null);
       
     exchanges.forEach((exchange, i) => {
       const exchangeData = data.map((d) => ({
         timestamp: d.timestamp,
-        value: Number(d[exchange]),
+        value: d[exchange] !== null ? Number(d[exchange]) : null,
       }));
     
       if (!isLogarithmic) {
-        const minY = d3.min(exchangeData, d => yScale(d.value)) || 0;
-        const maxY = d3.max(exchangeData, d => yScale(d.value)) || height;
+        const validData = exchangeData.filter(d => d.value !== null);
+        const minY = d3.min(validData, d => yScale(d.value!)) || 0;
+        const maxY = d3.max(validData, d => yScale(d.value!)) || height;
         
         const lineRange = Math.abs(maxY - minY);
         const offset = lineRange * 0.4;
@@ -237,7 +240,7 @@ const TokenGraph: React.FC<TokenGraphProps> = ({ data, isLogarithmic, title, val
       .join('text')
       .attr('x', 20)
       .attr('y', (d, i) => i * 40 + 11)
-      .text((d) => d.replace(/-(exchange|protocol|chain|solana)/gi, '').toUpperCase())
+      .text((d) => d.replace(/-(exchange|protocol|chain|solana|Protocol|Protocol Derivatives|Perpetual)/gi, '').toUpperCase())
       .attr('font-size', '12px')
       .attr('fill', 'white')
     
@@ -276,11 +279,11 @@ const TokenGraph: React.FC<TokenGraphProps> = ({ data, isLogarithmic, title, val
           .style('display', 'block')
           .html(() => {
             const sortedExchanges = exchanges.sort((a, b) => 
-              Number(closestDataPoint[b]) - Number(closestDataPoint[a])
+              Number(closestDataPoint[b] || 0) - Number(closestDataPoint[a] || 0)
             );
             return `
               ${sortedExchanges.map(exchange => `
-                <div><strong style="color: ${colors(exchange)}">${exchange.replace(/-(exchange|protocol|chain|solana)/gi, '').toUpperCase()}:</strong> ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(closestDataPoint[exchange]))}</div>
+                <div><strong style="color: ${colors(exchange)}">${exchange.replace(/-(exchange|protocol|chain|solana|_protocol|_derivatives|_perpetual)/gi, '')}:</strong> ${closestDataPoint[exchange] !== null ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(closestDataPoint[exchange])) : 'N/A'}</div>
               `).join('')}
               <div style="margin-top: 10px;">
                 <strong>Timestamp:</strong> ${new Date(closestDataPoint.timestamp).toLocaleString()}

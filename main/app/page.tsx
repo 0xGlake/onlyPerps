@@ -162,7 +162,8 @@ export default function Home() {
         getAssetPrice(),
         getTokenData(),
         getExchangesData(),
-      ]);
+      ]) as [ExchangeData[], AssetPriceData[], TokenData[], BroadExchangeData[]];
+
       setData(fetchedData);
       setCurrentAssetPrice(assetPriceData);
       setTokenData(tokenData);
@@ -260,7 +261,6 @@ export default function Home() {
             valueKey="trade_volume_24h_usd"
           />
           </>
-          
       )}
     </div>
   );

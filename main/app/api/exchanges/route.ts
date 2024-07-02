@@ -6,8 +6,10 @@ export async function GET(request: Request) {
     const { rows } = await pool.query(
     `SELECT *
     FROM onlyperpsexchanges
+    WHERE data IS NOT NULL
+    AND data != '{}'
     ORDER BY id DESC
-    LIMIT 1920;`);
+    LIMIT 672;`);
     return NextResponse.json(rows);
   } catch (error) {
     console.error('Error fetching data from Neon:', error);
