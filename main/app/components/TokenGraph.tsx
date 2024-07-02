@@ -43,7 +43,7 @@ const TokenGraph: React.FC<TokenGraphProps> = ({ data, isLogarithmic, title, val
     let yAxis: d3.Axis<d3.NumberValue>;
 
     const allValues = data.flatMap(d => Object.entries(d)
-      .filter(([key, value]) => key !== 'timestamp' && value !== null)
+      .filter(([key, value]) => key !== 'timestamp' && value !== null && !isNaN(Number(value)))
       .map(([, value]) => Number(value)));
     const minNonZeroValue = d3.min(allValues.filter(v => v > 0)) || 1;
     const maxValue = d3.max(allValues) || 1;
@@ -105,10 +105,9 @@ const TokenGraph: React.FC<TokenGraphProps> = ({ data, isLogarithmic, title, val
       .attr('stroke-opacity', 0.2);
 
     const line = d3
-      .line<{ timestamp: string; value: number | null }>()
+      .line<{ timestamp: string; value: number }>()
       .x((d) => xScale(new Date(d.timestamp)))
-      .y((d) => d.value !== null ? yScale(d.value) : yScale(0))
-      .defined(d => d.value !== null);
+      .y((d) => yScale(d.value));
 
     const exchanges = Object.keys(data[0]).filter(key => key !== 'timestamp');
     const alphaSortedExchanges = exchanges.sort((a, b) => a.localeCompare(b));
@@ -147,22 +146,22 @@ const TokenGraph: React.FC<TokenGraphProps> = ({ data, isLogarithmic, title, val
     feMerge.append('feMergeNode')
       .attr('in', 'SourceGraphic');
     
-    const area = d3.area<{ timestamp: string; value: number | null }>()
+    const area = d3.area<{ timestamp: string; value: number }>()
       .x((d) => xScale(new Date(d.timestamp)))
       .y0(height)
-      .y1((d) => d.value !== null ? yScale(d.value) : yScale(0))
-      .defined(d => d.value !== null);
+      .y1((d) => yScale(d.value));
       
     exchanges.forEach((exchange, i) => {
-      const exchangeData = data.map((d) => ({
-        timestamp: d.timestamp,
-        value: d[exchange] !== null ? Number(d[exchange]) : null,
-      }));
+      const exchangeData = data
+        .map((d) => ({
+          timestamp: d.timestamp,
+          value: d[exchange] !== null && !isNaN(Number(d[exchange])) ? Number(d[exchange]) : null,
+        }))
+        .filter((d): d is { timestamp: string; value: number } => d.value !== null);
     
-      if (!isLogarithmic) {
-        const validData = exchangeData.filter(d => d.value !== null);
-        const minY = d3.min(validData, d => yScale(d.value!)) || 0;
-        const maxY = d3.max(validData, d => yScale(d.value!)) || height;
+      if (!isLogarithmic && exchangeData.length > 0) {
+        const minY = d3.min(exchangeData, d => yScale(d.value)) || 0;
+        const maxY = d3.max(exchangeData, d => yScale(d.value)) || height;
         
         const lineRange = Math.abs(maxY - minY);
         const offset = lineRange * 0.4;
@@ -194,32 +193,54 @@ const TokenGraph: React.FC<TokenGraphProps> = ({ data, isLogarithmic, title, val
           .attr('opacity', 1);
       }
     
-      // Draw shadow line
-      svg
-        .append('path')
-        .datum(exchangeData)
-        .attr('fill', 'none')
-        .attr('stroke', 'black')
-        .attr('stroke-width', 2)
-        .attr('stroke-opacity', 0.35)
-        .attr('filter', 'url(#shadow-filter)')
-        .attr('d', line)
-        .attr('transform', 'translate(0, 3.5)');
-    
-      // Draw main line
-      svg
-        .append('path')
-        .datum(exchangeData)
-        .attr('fill', 'none')
-        .attr('stroke', colors(exchange))
-        .attr('stroke-width', 2)
-        .attr('d', line);
+      // Split the data into segments of consecutive values
+      const segments = exchangeData.reduce((acc, point, index, array) => {
+        if (index === 0 || array[index - 1].value === null) {
+          acc.push([point]);
+        } else {
+          acc[acc.length - 1].push(point);
+        }
+        return acc;
+      }, [] as Array<Array<{ timestamp: string; value: number }>>);
+
+      // Draw each segment separately
+      segments.forEach(segment => {
+        if (segment.length > 1) {
+          // Draw shadow line
+          svg
+            .append('path')
+            .datum(segment)
+            .attr('fill', 'none')
+            .attr('stroke', 'black')
+            .attr('stroke-width', 2)
+            .attr('stroke-opacity', 0.35)
+            .attr('filter', 'url(#shadow-filter)')
+            .attr('d', line)
+            .attr('transform', 'translate(0, 3.5)');
+        
+          // Draw main line
+          svg
+            .append('path')
+            .datum(segment)
+            .attr('fill', 'none')
+            .attr('stroke', colors(exchange))
+            .attr('stroke-width', 2)
+            .attr('d', line);
+        }
+      });
     });
 
     svg
       .append('g')
       .attr('transform', `translate(0,${height})`)
       .call(d3.axisBottom(xScale));
+
+    const cleanExchangeName = (name: string) => {
+      return name
+        .split(/[-_\s]+/)[0]
+        .replace(/(liquid)(?:\s|$)/g, '')
+        .toUpperCase();
+    };
 
     const legend = svg
       .append('g')
@@ -240,10 +261,10 @@ const TokenGraph: React.FC<TokenGraphProps> = ({ data, isLogarithmic, title, val
       .join('text')
       .attr('x', 20)
       .attr('y', (d, i) => i * 40 + 11)
-      .text((d) => d.replace(/-(exchange|protocol|chain|solana|Protocol|Protocol Derivatives|Perpetual)/gi, '').toUpperCase())
+      .text((d) => cleanExchangeName(d))
       .attr('font-size', '12px')
       .attr('fill', 'white')
-    
+
     const tooltip = d3.select(containerRef.current)
       .append('div')
       .attr('class', 'absolute bg-black bg-opacity-80 text-white p-2 pointer-events-none rounded text-xs')
@@ -255,54 +276,60 @@ const TokenGraph: React.FC<TokenGraphProps> = ({ data, isLogarithmic, title, val
       .attr('y1', 0)
       .attr('y2', height)
       .style('display', 'none');
-
-    svg.append('rect')
-      .attr('width', width)
-      .attr('height', height)
-      .attr('fill', 'none')
-      .attr('pointer-events', 'all')
-      .on('mousemove', (event) => {
-        const [mouseX] = d3.pointer(event);
-        const hoveredDate = xScale.invert(mouseX);
-        const closestDataPoint = data.reduce((prev, curr) => {
-          return (Math.abs(new Date(curr.timestamp).getTime() - hoveredDate.getTime()) < Math.abs(new Date(prev.timestamp).getTime() - hoveredDate.getTime()) ? curr : prev);
-        });
-
-        verticalLine
-          .attr('x1', mouseX)
-          .attr('x2', mouseX)
-          .style('display', 'block');
-
-        tooltip
-          .style('left', `${event.pageX + 10}px`)
-          .style('top', `${event.pageY}px`)
-          .style('display', 'block')
-          .html(() => {
-            const sortedExchanges = exchanges.sort((a, b) => 
-              Number(closestDataPoint[b] || 0) - Number(closestDataPoint[a] || 0)
-            );
-            return `
-              ${sortedExchanges.map(exchange => `
-                <div><strong style="color: ${colors(exchange)}">${exchange.replace(/-(exchange|protocol|chain|solana|_protocol|_derivatives|_perpetual)/gi, '')}:</strong> ${closestDataPoint[exchange] !== null ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(closestDataPoint[exchange])) : 'N/A'}</div>
-              `).join('')}
-              <div style="margin-top: 10px;">
-                <strong>Timestamp:</strong> ${new Date(closestDataPoint.timestamp).toLocaleString()}
-              </div>
-            `;
-          });
-      })
-      .on('mouseout', () => {
-        verticalLine.style('display', 'none');
-        tooltip.style('display', 'none');
+      
+  
+  svg.append('rect')
+    .attr('width', width)
+    .attr('height', height)
+    .attr('fill', 'none')
+    .attr('pointer-events', 'all')
+    .on('mousemove', (event) => {
+      const [mouseX] = d3.pointer(event);
+      const hoveredDate = xScale.invert(mouseX);
+      const closestDataPoint = data.reduce((prev, curr) => {
+        return (Math.abs(new Date(curr.timestamp).getTime() - hoveredDate.getTime()) < Math.abs(new Date(prev.timestamp).getTime() - hoveredDate.getTime()) ? curr : prev);
       });
 
-    svg.append('text')
-      .attr('x', width / 2)
-      .attr('y', -margin.top / 2)
-      .attr('text-anchor', 'middle')
-      .style('font-size', '32px')
-      .style('fill', 'white')
-      .text(title);
+    verticalLine
+      .attr('x1', mouseX)
+      .attr('x2', mouseX)
+      .style('display', 'block');
+
+    tooltip
+      .style('left', `${event.pageX + 10}px`)
+      .style('top', `${event.pageY}px`)
+      .style('display', 'block')
+      .html(() => {
+        const sortedExchanges = exchanges.sort((a, b) => 
+          Number(closestDataPoint[b] || 0) - Number(closestDataPoint[a] || 0)
+        );
+        return `
+          ${sortedExchanges.map(exchange => `
+            <div>
+              <strong style="color: ${colors(exchange)}">${cleanExchangeName(exchange)}:</strong> 
+              ${closestDataPoint[exchange] !== null && !isNaN(Number(closestDataPoint[exchange])) 
+                ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(closestDataPoint[exchange])) 
+                : 'N/A'}
+            </div>
+          `).join('')}
+          <div style="margin-top: 10px;">
+            <strong>Timestamp:</strong> ${new Date(closestDataPoint.timestamp).toLocaleString()}
+          </div>
+        `;
+      });
+  })
+  .on('mouseout', () => {
+    verticalLine.style('display', 'none');
+    tooltip.style('display', 'none');
+  });
+
+  svg.append('text')
+    .attr('x', width / 2)
+    .attr('y', -margin.top / 2)
+    .attr('text-anchor', 'middle')
+    .style('font-size', '32px')
+    .style('fill', 'white')
+    .text(title);
 
   }, [data, isLogarithmic, title, valueKey]);
 
