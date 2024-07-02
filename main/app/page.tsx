@@ -36,6 +36,17 @@ type TokenData = {
   };
 };
 
+type BroadExchangeData = {
+  id: number;
+  timestamp: string;
+  data: {
+    [exchangeKey: string]: {
+      open_interest_usd : number;
+      trade_volume_24h_usd : number;
+    };
+  };
+};
+
 type GraphData = {
   timestamp: string;
   [exchangeKey: string]: number | string;
@@ -57,6 +68,11 @@ async function getTokenData(): Promise<TokenData[]> {
   return await response.json();
 }
 
+async function getExchangesData(): Promise<BroadExchangeData[]> {
+  const response = await fetch(`http://localhost:3000/api/exchanges`);
+  return await response.json();
+}
+
 function filterData(data: ExchangeData[], selectedOption: string): ExchangeData[] {
   const timeframes: { [key: string]: number } = {
     '1-Day': 96,
@@ -70,6 +86,57 @@ function filterData(data: ExchangeData[], selectedOption: string): ExchangeData[
   return data.slice(0, timeframe);
 }
 
+function processTokenData(tokenData: TokenData[]): {
+  fdvData: GraphData[];
+  priceData: GraphData[];
+  mcapData: GraphData[];
+} {
+  const fdvData: GraphData[] = [];
+  const priceData: GraphData[] = [];
+  const mcapData: GraphData[] = [];
+
+  tokenData.forEach((item) => {
+    const fdvItem: GraphData = { timestamp: item.timestamp };
+    const priceItem: GraphData = { timestamp: item.timestamp };
+    const mcapItem: GraphData = { timestamp: item.timestamp };
+
+    Object.entries(item.data).forEach(([exchange, values]) => {
+      fdvItem[exchange] = values.fully_diluted_valuation;
+      priceItem[exchange] = values.current_price;
+      mcapItem[exchange] = values.market_cap;
+    });
+
+    fdvData.push(fdvItem);
+    priceData.push(priceItem);
+    mcapData.push(mcapItem);
+  });
+
+  return { fdvData, priceData, mcapData };
+}
+
+function processBroadExchangeData(broadExchangeData: BroadExchangeData[]): {
+  oiData: GraphData[];
+  tvData: GraphData[];
+} {
+  const oiData: GraphData[] = [];
+  const tvData: GraphData[] = [];
+
+  broadExchangeData.forEach((item) => {
+    const oiItem: GraphData = { timestamp: item.timestamp };
+    const tvItem: GraphData = { timestamp: item.timestamp };
+
+    Object.entries(item.data).forEach(([exchange, values]) => {
+      oiItem[exchange] = values.open_interest_usd;
+      tvItem[exchange] = values.trade_volume_24h_usd;
+    });
+
+    oiData.push(oiItem);
+    tvData.push(tvItem);
+  });
+
+  return { oiData, tvData };
+}
+
 export default function Home() {
   const [selectedOption, setSelectedOption] = useState('7-Days');
   const [isAPR, setIsAPR] = useState(true)
@@ -79,46 +146,36 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [currentAssetPrice, setCurrentAssetPrice] = useState<AssetPriceData[]>([]);
   const [tokenData, setTokenData] = useState<TokenData[]>([]);
+  const [BroadExchangeData, setBroadExchangeData] = useState<BroadExchangeData[]>([]);
 
   const [fullyDilutedValuationData, setFullyDilutedValuationData] = useState<GraphData[]>([]);
-  const [currentPriceData, setCurrentPriceData] = useState<GraphData[]>([]);
+  //const [currentPriceData, setCurrentPriceData] = useState<GraphData[]>([]);
   const [marketCapData, setMarketCapData] = useState<GraphData[]>([]);
+  const [oiData, setOiData] = useState<GraphData[]>([]);
+  const [tvData, setTvData] = useState<GraphData[]>([]);
 
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [fetchedData, assetPriceData, tokenData] = await Promise.all([
+      const [fetchedData, assetPriceData, tokenData, BroadExchangeData] = await Promise.all([
         FundingRateData(),
         getAssetPrice(),
-        getTokenData()
+        getTokenData(),
+        getExchangesData(),
       ]);
       setData(fetchedData);
       setCurrentAssetPrice(assetPriceData);
       setTokenData(tokenData);
+      setBroadExchangeData(BroadExchangeData);
 
-      const fdvData: GraphData[] = [];
-      const priceData: GraphData[] = [];
-      const mcapData: GraphData[] = [];
-
-      tokenData.forEach((item) => {
-        const fdvItem: GraphData = { timestamp: item.timestamp };
-        const priceItem: GraphData = { timestamp: item.timestamp };
-        const mcapItem: GraphData = { timestamp: item.timestamp };
-
-        Object.entries(item.data).forEach(([exchange, values]) => {
-          fdvItem[exchange] = values.fully_diluted_valuation;
-          priceItem[exchange] = values.current_price;
-          mcapItem[exchange] = values.market_cap;
-        });
-
-        fdvData.push(fdvItem);
-        priceData.push(priceItem);
-        mcapData.push(mcapItem);
-      });
+      const { fdvData, priceData, mcapData } = processTokenData(tokenData);
+      const { oiData, tvData } = processBroadExchangeData(BroadExchangeData);
 
       setFullyDilutedValuationData(fdvData);
-      setCurrentPriceData(priceData);
+      //setCurrentPriceData(priceData);
       setMarketCapData(mcapData);
+      setOiData(oiData);
+      setTvData(tvData);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -188,7 +245,22 @@ export default function Home() {
             title="Market Cap"
             valueKey="market_cap"
           />
+
+          <TokenGraph 
+            data={oiData} 
+            isLogarithmic={isLogarithmic} 
+            title="Open Interest"
+            valueKey="open_interest_usd"
+          />
+
+          <TokenGraph 
+            data={tvData} 
+            isLogarithmic={isLogarithmic} 
+            title="Trade Volume 24hr"
+            valueKey="trade_volume_24h_usd"
+          />
           </>
+          
       )}
     </div>
   );

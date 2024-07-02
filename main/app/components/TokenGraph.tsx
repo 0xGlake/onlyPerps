@@ -293,7 +293,6 @@ const TokenGraph: React.FC<TokenGraphProps> = ({ data, isLogarithmic, title, val
         tooltip.style('display', 'none');
       });
 
-    // Add title
     svg.append('text')
       .attr('x', width / 2)
       .attr('y', -margin.top / 2)
