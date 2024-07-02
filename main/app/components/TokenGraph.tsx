@@ -213,7 +213,7 @@ const FullyDillutedValue: React.FC<FullyDillutedValueProps> = ({ data, isLogarit
         .attr('fill', 'none')
         // .attr('stroke', colors(exchange))
         .attr('stroke', 'black')
-        .attr('stroke-width', 5)
+        .attr('stroke-width', 2)
         .attr('stroke-opacity', 0.35)
         .attr('filter', 'url(#shadow-filter)')
         .attr('d', line)
