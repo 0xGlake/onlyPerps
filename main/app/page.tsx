@@ -149,7 +149,6 @@ export default function Home() {
   const [BroadExchangeData, setBroadExchangeData] = useState<BroadExchangeData[]>([]);
 
   const [fullyDilutedValuationData, setFullyDilutedValuationData] = useState<GraphData[]>([]);
-  //const [currentPriceData, setCurrentPriceData] = useState<GraphData[]>([]);
   const [marketCapData, setMarketCapData] = useState<GraphData[]>([]);
   const [oiData, setOiData] = useState<GraphData[]>([]);
   const [tvData, setTvData] = useState<GraphData[]>([]);
@@ -173,7 +172,6 @@ export default function Home() {
       const { oiData, tvData } = processBroadExchangeData(BroadExchangeData);
 
       setFullyDilutedValuationData(fdvData);
-      //setCurrentPriceData(priceData);
       setMarketCapData(mcapData);
       setOiData(oiData);
       setTvData(tvData);
@@ -214,46 +212,28 @@ export default function Home() {
             <AssetBaseToggleSwitch isBase={isBase} setIsBase={setIsBase}/>
           </div>
           <OpenInterestChart data={memoizedFilteredData} isBase={isBase} currentAssetPrice={currentAssetPrice}/>
-          {/*
-          <h1 className="text-4xl font-bold mt-8 mb-4 text-center">Fully Dilluted Value</h1>
-          <div className='flex justify-center m-5 space-x-5'>
-            <LogarithmicOrLinearScaleToken isLogarithmic={isLogarithmic} setIsLogarithmic={setIsLogarithmic} />
-          </div>
-          <TokenGraph data={tokenData} isLogarithmic={isLogarithmic} /> 
-          */}
           <h1 className="text-4xl font-bold mt-8 mb-4 text-center">Token Metrics</h1>
           <div className='flex justify-center m-5 space-x-5'>
             <LogarithmicOrLinearScaleToken isLogarithmic={isLogarithmic} setIsLogarithmic={setIsLogarithmic} />
           </div>
-          
           <TokenGraph 
             data={fullyDilutedValuationData} 
             isLogarithmic={isLogarithmic} 
             title="Fully Diluted Valuation"
             valueKey="fully_diluted_valuation"
           />
-          
-          {/* <TokenGraph 
-            data={currentPriceData} 
-            isLogarithmic={isLogarithmic} 
-            title="Current Price"
-            valueKey="current_price"
-          /> */}
-          
           <TokenGraph 
             data={marketCapData} 
             isLogarithmic={isLogarithmic} 
             title="Market Cap"
             valueKey="market_cap"
           />
-
           <TokenGraph 
             data={oiData} 
             isLogarithmic={isLogarithmic} 
             title="Open Interest"
             valueKey="open_interest_usd"
           />
-
           <TokenGraph 
             data={tvData} 
             isLogarithmic={isLogarithmic} 
