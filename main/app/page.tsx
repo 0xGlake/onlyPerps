@@ -24,6 +24,16 @@ export default function Home() {
 
     return (
     <div className="bg-gray-900 min-h-screen text-white p-8 flex flex-col items-center justify-center">
+      <h1 className="text-5xl font-bold mb-4">OnlyPerps</h1>
+      <div className="relative w-64 h-40 mb-20">
+        <Image 
+          src="/logo.png" 
+          alt="OnlyPerps Logo"
+          fill
+          style={{objectFit: "contain"}}
+          priority
+          />
+      </div>
       <div className="flex flex-row space-x-10">
         <Link 
           href="/funding-rates" 
