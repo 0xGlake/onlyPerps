@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "OnlyPerps",
-  description: "Perps Dex Dashboard with open interest and funding rate data.",
+  description: "Perps Dex Dashboard with open interest and funding rate data",
 };
 
 export default function RootLayout({
@@ -19,7 +19,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <Header />
-        <main className="max-w-7xl mx-auto">
+        <main className="max-w">
           {children}
         </main>
         <StaleDataCountdownFooter />

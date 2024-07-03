@@ -9,6 +9,7 @@ import OpenInterestChart from '../components/OpenInterestStackedChart';
 import AprToggleSwitch from '../components/AprToggleSwitch';
 import AssetBaseToggleSwitch from '../components/AssetBaseToggleSwitch';
 import TimeDropDown from '../components/TimeDropDown';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function FundingRatesPage() {
   const { 
@@ -32,17 +33,8 @@ export default function FundingRatesPage() {
 
   const filteredExchangeData = getFilteredExchangeData(selectedOption);
 
-  const LoadingSpinner = () => (
-    <div className="flex justify-center items-center h-64">
-      <svg className="animate-spin h-20 w-20 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-    </div>
-  );
-
   return (
-    <div className="bg-gray-900 min-h-screen text-white p-8">
+    <div className="bg-gray-900 min-h-screen text-white p-8 pt-20">
       <h1 className="text-4xl font-bold mb-4 text-center">Funding Rates</h1>
       <div className='flex justify-center m-5 space-x-5'>
         <AprToggleSwitch isAPR={isAPR} setIsAPR={setIsAPR} />
