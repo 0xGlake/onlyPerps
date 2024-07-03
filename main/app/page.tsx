@@ -22,17 +22,18 @@ export default function Home() {
     fetchDataForPage('exchange-data');
   }, []);
 
-    return (
+  return (
     <div className="bg-gray-900 min-h-screen text-white p-8 flex flex-col items-center justify-center">
       <h1 className="text-5xl font-bold mb-4">OnlyPerps</h1>
-      <div className="relative w-64 h-40 mb-20">
+      <div className="relative w-64 h-40 mb-10">
         <Image 
           src="/logo.png" 
           alt="OnlyPerps Logo"
           fill
           style={{objectFit: "contain"}}
           priority
-          />
+          sizes="50vw, 33vw"
+        />
       </div>
       <div className="flex flex-row space-x-10">
         <Link 
@@ -40,7 +41,7 @@ export default function Home() {
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded text-center flex flex-col items-center"
         >
           {exchangeData && assetPriceData ? (
-            <svg className="w-32 h-32 m-4" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-32 h-32 m-4" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
             <g className="fill-current">
               <path d="M263.6,245v-29.9c5.3,1.2,10.6,3.6,16,6.8c1.6,0.9,3.1,1.4,4.7,1.4c4.8,0,8.7-3.7,8.7-8.6   c0-3.7-2.2-6.1-4.7-7.5c-7.2-4.5-14.9-7.5-24.1-8.6v-3.4c0-3.7-3-6.7-6.7-6.7c-3.7,0-6.8,3-6.8,6.7v3.3   c-19.4,1.6-32.7,13.1-32.7,29.7c0,17.6,10.6,26.1,33.3,32V291c-8.6-1.6-15.7-5.1-23-10.4c-1.4-1.1-3.3-1.7-5.1-1.7   c-4.8,0-8.6,3.7-8.6,8.6c0,3.3,1.6,5.8,4.2,7.5c9.5,6.7,20.2,10.9,31.9,12.1v9.6c0,3.7,3.1,6.7,6.8,6.7c3.7,0,6.7-3,6.7-6.7v-9.3   c19.8-1.9,33.1-13.2,33.1-30.3C297.4,260.4,287.3,250.9,263.6,245z M251.3,241.7c-12-3.9-14.9-7.9-14.9-14.5   c0-6.8,5-12.1,14.9-13.1V241.7z M263.6,291.6v-28.3c12,3.7,15.4,7.9,15.4,14.8C279,285.6,273.6,290.5,263.6,291.6z"/>
               <path d="M256,152.4c-14.8,0-29.2,3.1-42.6,9.1c-37.1,16.7-61,53.8-61,94.5c0,1.1,0,2.3,0.1,3.4c0.9,27,12,52.2,31.4,71   c19.4,18.9,45.1,29.2,72.1,29.2c57.1,0,103.6-46.5,103.6-103.6S313.1,152.4,256,152.4z M256,345.6c-48.7,0-88-38.1-89.6-86.7   c0-1,0-1.9,0-2.9c0-35.2,20.7-67.2,52.8-81.7c11.6-5.2,24-7.9,36.8-7.9c49.4,0,89.6,40.2,89.6,89.6S305.4,345.6,256,345.6z"/>
@@ -57,7 +58,11 @@ export default function Home() {
               <path d="M447.7,262.4c2.9,8.6,11.1,14.8,20.7,14.8c12,0,21.8-9.8,21.8-21.8s-9.8-21.8-21.8-21.8   c-9.6,0-17.8,6.2-20.7,14.8H414c-3.9,0-7,3.1-7,7s3.1,7,7,7H447.7z M468.3,247.6c4.3,0,7.8,3.5,7.8,7.8s-3.5,7.8-7.8,7.8   s-7.8-3.5-7.8-7.8S464,247.6,468.3,247.6z"/>
             </g>
           </svg>
-          ) : <LoadingSpinner />}
+          ) : (
+            <div className="w-32 h-32 m-4 flex items-center justify-center">
+              <LoadingSpinner />
+            </div>
+          )}
           Funding Rates
         </Link>
         <Link 
@@ -69,7 +74,11 @@ export default function Home() {
             <path className="fill-current" d="M116.034,0C52.053,0,0,52.053,0,116.034s52.053,116.034,116.033,116.034c63.981,0,116.034-52.053,116.034-116.034 S180.015,0,116.034,0z M106.701,9.034h18v18h-18V9.034z M197.07,116.034c0,44.684-36.353,81.036-81.036,81.036 c-44.683,0-81.035-36.353-81.035-81.036s36.353-81.036,81.035-81.036C160.717,34.998,197.07,71.351,197.07,116.034z M46.738,34.01 l12.728,12.728L46.738,59.466L34.01,46.738L46.738,34.01z M26.701,125.034h-18v-18h18V125.034z M46.738,198.059L34.01,185.331 l12.728-12.728l12.728,12.728L46.738,198.059z M124.701,223.034h-18v-18h18V223.034z M185.33,198.059l-12.728-12.728l12.728-12.728 l12.728,12.728L185.33,198.059z M185.33,59.466l-12.728-12.728L185.33,34.01l12.728,12.728L185.33,59.466z M204.701,125.034v-18h18 v18H204.701z"/>
             <path className="fill-current" d="M49.999,116.034c0,36.412,29.623,66.036,66.035,66.036s66.036-29.624,66.036-66.036s-29.624-66.036-66.036-66.036 S49.999,79.622,49.999,116.034z M116.008,153.231l-31.423-36.909l31.423-36.909l31.423,36.909L116.008,153.231z"/>
           </svg>
-          ) : <LoadingSpinner />}
+          ) : (
+            <div className="w-32 h-32 m-4 flex items-center justify-center">
+              <LoadingSpinner />
+            </div>
+          )}
           Token Metrics
         </Link>
         <Link 
@@ -80,7 +89,11 @@ export default function Home() {
           <svg className="w-32 h-32 m-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path className="stroke-current" fill="none" d="M3 21.0001H21M4 18.0001H20M6 18.0001V13.0001M10 18.0001V13.0001M14 18.0001V13.0001M18 18.0001V13.0001M12 7.00695L12.0074 7.00022M21 10.0001L14.126 3.88986C13.3737 3.2212 12.9976 2.88688 12.5732 2.75991C12.1992 2.64806 11.8008 2.64806 11.4268 2.75991C11.0024 2.88688 10.6263 3.2212 9.87404 3.88986L3 10.0001H21Z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          ) : <LoadingSpinner />}
+          ) : (
+            <div className="w-32 h-32 m-4 flex items-center justify-center">
+              <LoadingSpinner />
+            </div>
+          )}
           Exchange Data
         </Link>
       </div>
