@@ -12,7 +12,7 @@ const Header = () => {
   }
 
   return (
-    <header className="fixed bg-gray-800 text-white p-4 flex justify-between items-center h-16 w-full">
+    <header className="fixed bg-gray-800 text-white p-4 flex justify-between items-center h-16 w-full z-20">
       <Link href="/" className="hover:text-purple-500 transition-colors hover:bg-purple-200 rounded-lg px-4">
         <div className="flex items-center space-x-4">
           <div className="relative w-16 h-10">
