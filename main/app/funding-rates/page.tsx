@@ -1,6 +1,5 @@
 'use client';
 
-// import '../app/styles/globals.css';
 import '../styles/globals.css';
 
 import { useState, useEffect } from 'react';
@@ -43,10 +42,12 @@ export default function FundingRatesPage() {
       <div className='flex justify-center m-5 space-x-5'>
         <AprToggleSwitch isAPR={isAPR} setIsAPR={setIsAPR} />
         <TimeDropDown selectedOption={selectedOption} setSelectedOption={setSelectedOption} />
-        <AssetBaseToggleSwitch isBase={isBase} setIsBase={setIsBase}/>
       </div>
       <FundingRateHeatMap data={filteredExchangeData} isAPR={isAPR}/>
-      <h2 className="text-3xl font-bold mt-8 mb-4 text-center">Open Interest Stacked Chart</h2>
+      <h2 className="text-4xl font-bold mt-4 mb-4 text-center">Open Interest Stacked Chart</h2>
+      <div className='flex justify-center m-5 space-x-5'>
+        <AssetBaseToggleSwitch isBase={isBase} setIsBase={setIsBase}/>
+      </div>
       <OpenInterestChart data={filteredExchangeData} isBase={isBase} currentAssetPrice={assetPriceData ? assetPriceData : []}/>
     </div>
   );

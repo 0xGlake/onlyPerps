@@ -139,7 +139,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
   },
 }));
 
-// Timestamp store (unchanged)
+// Timestamp store
 interface TimestampStore {
   timestamps: Record<string, number>;
   updateTimestamp: (key: string) => void;
