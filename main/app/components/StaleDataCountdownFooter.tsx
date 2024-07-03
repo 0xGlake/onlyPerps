@@ -5,7 +5,7 @@ import { useTimestampStore } from '../stores/useDataStore';
 import { usePathname } from 'next/navigation';
 import { fetchDataForPage } from '../stores/useDataStore';
 
-const STALE_TIME = 5 * 60 * 1000; // 5 minutes
+const STALE_TIME = 15 * 60 * 1000; // 15 minutes
 
 const pageDataKeys = {
   '/funding-rates': ['exchangeData', 'assetPriceData'],
@@ -44,10 +44,7 @@ export default function StaleDataCountdownFooter() {
   }, [timestamps, relevantDataKeys]);
 
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    const pageName = pathname === '/' ? 'home' : pathname.slice(1);
-    await fetchDataForPage(pageName);
-    setIsRefreshing(false);
+    // still not really sure what to do here because wont let it refresh unless data is actually stale, maybe shouldnt even be a button
   };
 
   if (!leastFreshData) return null;
@@ -58,11 +55,10 @@ export default function StaleDataCountdownFooter() {
   const color = percentage < 10 ? 'text-red-500' : 'text-blue-500';
 
   return (
-    <footer className="fixed bottom-4 right-4 bg-gray-800 text-white p-4 rounded-full shadow-lg content-center">
-      <p className="text-xs ">Data Staleness</p>
+    <footer className="fixed bottom-3 right-3 bg-gray-800 text-white p-3 rounded-full shadow-lg items-center justify-center">
       <button 
         onClick={handleRefresh}
-        disabled={isRefreshing}
+        disabled={!isRefreshing} // just disable by default for now, change if make functional later
         className="relative w-16 h-16 focus:outline-none"
         title="Click to refresh data"
       >
