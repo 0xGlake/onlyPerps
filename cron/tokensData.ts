@@ -66,4 +66,10 @@ export async function fetchCoinData(coinIds: string[]): Promise<Record<string, C
 }
 
 // Example usage
-//const coins = ['aevo-exchange', 'rabbitx', 'dydx-chain', 'vertex-protocol', 'drift-protocol', 'jupiter-exchange-solana', 'gmx'];
+// const coins = ['aevo-exchange', 'rabbitx', 'dydx-chain', 'vertex-protocol', 'drift-protocol', 'jupiter-exchange-solana', 'gmx'];
+
+// fetchCoinData(coins).then(data => {
+//   console.log(data);
+// });
+
+// npx ts-node tokensData.ts
