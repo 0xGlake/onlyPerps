@@ -71,6 +71,8 @@ export async function fetchExchangeData(exchangeIds: string[]): Promise<Map<stri
 }
 
 // Example example usage
-//fetchExchangeData(['aevo', 'vertex_protocol_derivatives', 'drift_protocol', 'hyperliquid', 'rabbitx', 'dydx_perpetual']);
+fetchExchangeData(['aevo', 'vertex_protocol_derivatives', 'drift_protocol', 'hyperliquid', 'rabbitx', 'dydx_perpetual']).then(data => {
+  console.log(data);
+});
 
 // npx ts-node exchangesData.ts

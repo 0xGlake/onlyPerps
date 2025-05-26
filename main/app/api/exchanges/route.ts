@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     WHERE data IS NOT NULL
     AND data != '{}'
     ORDER BY id DESC
-    LIMIT 672;`);
+    LIMIT 2688;`);
     return NextResponse.json(rows);
   } catch (error) {
     console.error('Error fetching data from Neon:', error);

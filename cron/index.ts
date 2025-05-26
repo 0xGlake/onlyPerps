@@ -170,4 +170,8 @@ export async function handler(event: any, context: any): Promise<void> {
 }
 
 // example usage
-// handler(null, null);
+handler(null, null).then(data => {
+  console.log(data);
+});
+
+// npx ts-node index.ts 

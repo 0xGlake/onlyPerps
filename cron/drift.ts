@@ -11,7 +11,7 @@ import {
   BigNum,
   BASE_PRECISION_EXP,
   PRICE_PRECISION_EXP,
-  FUNDING_RATE_PRECISION_EXP
+  FUNDING_RATE_PRECISION_EXP,
 } from '@drift-labs/sdk';
 import { getRpcConnection } from './solanaHelper';
 import { MainnetPerpMarkets } from './driftConstants'
@@ -96,4 +96,4 @@ export async function getDrift(tickers: string[]): Promise<{ [key: string]: { fu
   return results;
 };
 
-//getDrift(['ETH', 'BTC', 'SOL']).then(res => console.log(res));
+getDrift(['ETH']).then(res => console.log(res));
