@@ -1,4 +1,8 @@
-import { HyperliquidExchange } from "@/app/lib/exchanges/hyperliquid/adapter";
+// tests/test-exchanges-require.ts - Full test suite with require syntax
+// npx ts-node tests/test-exchanges.ts
+const {
+  HyperliquidExchange,
+} = require("../app/lib/exchanges/hyperliquid/adapter");
 
 const ORDERBOOK_TICKERS = ["ETH", "BTC", "SOL"];
 
@@ -20,7 +24,7 @@ async function testHyperliquidFunding() {
 
     // Show first 10 assets
     const entries = Object.entries(fundingData).slice(0, 10);
-    entries.forEach(([symbol, data]) => {
+    entries.forEach(([symbol, data]: [string, any]) => {
       console.log(
         `  ${symbol.padEnd(12)} | Funding: ${data.fundingRate.padEnd(12)} | OI: ${data.openInterest}`,
       );
@@ -33,7 +37,7 @@ async function testHyperliquidFunding() {
     }
 
     // Show some interesting stats
-    const fundingRates = Object.values(fundingData).map((d) =>
+    const fundingRates = Object.values(fundingData).map((d: any) =>
       parseFloat(d.fundingRate),
     );
     const maxFunding = Math.max(...fundingRates);
@@ -49,8 +53,8 @@ async function testHyperliquidFunding() {
     );
 
     return fundingData;
-  } catch (error) {
-    console.error("❌ Funding test failed:", error);
+  } catch (error: any) {
+    console.error("❌ Funding test failed:", error.message);
     return null;
   }
 }
@@ -72,10 +76,10 @@ async function testHyperliquidOrderbooks() {
       const spreadBps = (spread / parseFloat(topBid.price)) * 10000;
 
       console.log(`  ✅ ${ticker}-USD:`);
-      console.log(`     Top Bid: $${topBid.price} (${topBid.size} size)`);
-      console.log(`     Top Ask: $${topAsk.price} (${topAsk.size} size)`);
+      console.log(`     Top Bid: ${topBid.price} (${topBid.size} size)`);
+      console.log(`     Top Ask: ${topAsk.price} (${topAsk.size} size)`);
       console.log(
-        `     Spread:  $${spread.toFixed(4)} (${spreadBps.toFixed(2)} bps)`,
+        `     Spread:  ${spread.toFixed(4)} (${spreadBps.toFixed(2)} bps)`,
       );
       console.log(
         `     Levels:  ${orderbook.bids.length} bids, ${orderbook.asks.length} asks`,
@@ -83,8 +87,8 @@ async function testHyperliquidOrderbooks() {
       console.log(
         `     Time:    ${new Date(orderbook.timestamp).toISOString()}`,
       );
-    } catch (error) {
-      console.error(`  ❌ ${ticker} orderbook failed:`, error);
+    } catch (error: any) {
+      console.error(`  ❌ ${ticker} orderbook failed:`, error.message);
     }
   }
 }
@@ -104,10 +108,10 @@ async function testCombinedData() {
 
     // Count assets with/without orderbooks
     const withOrderbooks = Object.values(allData).filter(
-      (d) => d.orderBook !== null,
+      (d: any) => d.orderBook !== null,
     ).length;
     const withoutOrderbooks = Object.values(allData).filter(
-      (d) => d.orderBook === null,
+      (d: any) => d.orderBook === null,
     ).length;
 
     console.log(`   ${withOrderbooks} assets have orderbooks`);
@@ -132,15 +136,15 @@ async function testCombinedData() {
       )
       .slice(0, 5);
 
-    minorAssets.forEach(([symbol, data]) => {
+    minorAssets.forEach(([symbol, data]: [string, any]) => {
       console.log(
         `  ${symbol}: Funding=${data.fundingRate}, OI=${data.openInterest}`,
       );
     });
 
     return allData;
-  } catch (error) {
-    console.error("❌ Combined test failed:", error);
+  } catch (error: any) {
+    console.error("❌ Combined test failed:", error.message);
     return null;
   }
 }
@@ -156,7 +160,7 @@ async function testLambdaSimulation() {
     const hyperliquid = new HyperliquidExchange();
     const dataHyperliquid = await hyperliquid
       .getAllData(ORDERBOOK_TICKERS)
-      .catch((err) => {
+      .catch((err: any) => {
         console.error("Error fetching data from Hyperliquid:", err);
         return null;
       });
@@ -172,7 +176,7 @@ async function testLambdaSimulation() {
       // Show what would go to Redis
       const fundingCount = Object.keys(exchangeData.dataHyperliquid).length;
       const orderbookCount = Object.values(exchangeData.dataHyperliquid).filter(
-        (d) => d.orderBook,
+        (d: any) => d.orderBook,
       ).length;
 
       console.log(`   Redis keys to create:`);
@@ -183,8 +187,8 @@ async function testLambdaSimulation() {
     } else {
       console.log("❌ Lambda simulation failed - no data returned");
     }
-  } catch (error) {
-    console.error("❌ Lambda simulation error:", error);
+  } catch (error: any) {
+    console.error("❌ Lambda simulation error:", error.message);
   }
 }
 
@@ -204,7 +208,7 @@ async function runAllTests() {
     console.log("=======================");
     console.log("✅ Your exchange implementation is working correctly");
     console.log("✅ Ready to deploy to AWS Lambda with Redis");
-  } catch (error) {
+  } catch (error: any) {
     console.error("\n💥 TEST SUITE FAILED:", error);
     console.log("Fix the errors above before deploying to production");
   }
