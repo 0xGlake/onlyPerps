@@ -1,4 +1,3 @@
-// app/lib/exchanges/hyperliquid/adapter.ts
 import { BaseExchange } from "../base/exchange";
 import { FundingData, OrderBook, OrderBookLevel } from "../base/types";
 import { HyperliquidAPI } from "./api";
