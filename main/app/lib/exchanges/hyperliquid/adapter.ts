@@ -1,5 +1,10 @@
-import { BaseExchange } from "../base/exchange";
-import { FundingData, OrderBook, OrderBookLevel } from "../base/types";
+// app/lib/exchanges/hyperliquid/adapter.ts
+import {
+  BaseExchange,
+  FundingData,
+  OrderBook,
+  OrderBookLevel,
+} from "../base/exchange";
 import { HyperliquidAPI } from "./api";
 
 interface HyperMarket {
