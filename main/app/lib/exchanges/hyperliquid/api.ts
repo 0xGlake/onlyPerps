@@ -1,3 +1,4 @@
+// app/lib/exchanges/hyperliquid/api.ts
 export class HyperliquidAPI {
   private baseUrl = "https://api.hyperliquid.xyz/info";
   private headers = { "Content-Type": "application/json" };
