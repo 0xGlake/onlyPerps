@@ -11,9 +11,7 @@ export class ExtendedExchange extends BaseExchange {
   name = "extended";
   private api = new ExtendedAPI();
 
-  async getFundingAndOI(
-    tickers?: string[],
-  ): Promise<{ [key: string]: FundingData }> {
+  async getFundingAndOI(): Promise<{ [key: string]: FundingData }> {
     return this.withRetry(async () => {
       const response = await this.api.getMarkets();
 
@@ -26,9 +24,6 @@ export class ExtendedExchange extends BaseExchange {
       for (const market of response.data) {
         // Only include active markets
         if (market.status !== "ACTIVE") continue;
-
-        // If tickers are specified, only include those
-        if (tickers && !tickers.includes(market.name)) continue;
 
         result[market.name] = {
           fundingRate: market.marketStats.fundingRate,

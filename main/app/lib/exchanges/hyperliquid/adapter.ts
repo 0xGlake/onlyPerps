@@ -18,9 +18,7 @@ export class HyperliquidExchange extends BaseExchange {
   name = "hyperliquid";
   private api = new HyperliquidAPI();
 
-  async getFundingAndOI(
-    tickers?: string[],
-  ): Promise<{ [key: string]: FundingData }> {
+  async getFundingAndOI(): Promise<{ [key: string]: FundingData }> {
     return this.withRetry(async () => {
       const data = await this.api.getFundingAndOpenInterest();
 
