@@ -1,11 +1,10 @@
 // app/lib/exchanges/aevo/api.ts
-
 export class AevoAPI {
   private baseUrl = "https://api.aevo.xyz";
   private headers = { accept: "application/json" };
 
-  async getMarkets() {
-    const response = await fetch(`${this.baseUrl}/markets`, {
+  async getFundingAndOpenInterest() {
+    const response = await fetch(`${this.baseUrl}/coingecko-statistics`, {
       method: "GET",
       headers: this.headers,
     });
@@ -17,30 +16,14 @@ export class AevoAPI {
     return response.json();
   }
 
-  async getInstrument(instrumentName: string) {
-    const response = await fetch(
-      `${this.baseUrl}/instrument/${instrumentName}`,
-      {
-        method: "GET",
-        headers: this.headers,
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
-    }
-
-    return response.json();
-  }
-
   async getOrderBook(instrumentName: string) {
-    const response = await fetch(
-      `${this.baseUrl}/orderbook?instrument_name=${instrumentName}`,
-      {
-        method: "GET",
-        headers: this.headers,
-      },
-    );
+    const url = new URL(`${this.baseUrl}/orderbook`);
+    url.searchParams.append("instrument_name", instrumentName);
+
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers: this.headers,
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
@@ -54,46 +37,24 @@ export class AevoAPI {
 async function testAPI() {
   const api = new AevoAPI();
 
-  console.log("Testing markets endpoint...");
+  console.log("Testing funding data...");
   try {
-    const markets = await api.getMarkets();
-    const activePerps = markets.filter(
-      (m: any) => m.is_active && m.instrument_name.endsWith("-PERP"),
-    );
+    const funding = await api.getFundingAndOpenInterest();
     console.log(
-      "✅ Markets success, found",
-      activePerps.length,
-      "active perpetuals",
+      "✅ Funding success, sample:",
+      JSON.stringify(funding.slice(0, 2), null, 2),
     );
-    console.log("Sample market:", JSON.stringify(activePerps[0], null, 2));
+    console.log(`Total markets: ${funding.length}`);
   } catch (error) {
-    console.error("❌ Markets failed:", error);
-  }
-
-  console.log("\nTesting instrument data for ETH-PERP...");
-  try {
-    const instrument = await api.getInstrument("ETH-PERP");
-    console.log("✅ Instrument success:");
-    console.log("- Mark price:", instrument.mark_price);
-    console.log("- Funding rate:", instrument.funding_rate);
-    console.log("- Open interest:", instrument.markets?.total_oi);
-    console.log("Full response:", JSON.stringify(instrument, null, 2));
-  } catch (error) {
-    console.error("❌ Instrument failed:", error);
+    console.error("❌ Funding failed:", error);
   }
 
   console.log("\nTesting orderbook for ETH-PERP...");
   try {
     const orderbook = await api.getOrderBook("ETH-PERP");
-    console.log("✅ Orderbook success:");
-    console.log("- Top bid:", orderbook.bids?.[0]);
-    console.log("- Top ask:", orderbook.asks?.[0]);
-    console.log("- Timestamp:", orderbook.last_updated);
-    console.log("Orderbook structure:", {
-      bids: orderbook.bids?.length || 0,
-      asks: orderbook.asks?.length || 0,
-      keys: Object.keys(orderbook),
-    });
+    console.log("✅ Orderbook success, structure:", Object.keys(orderbook));
+    console.log("Top bid:", orderbook.bids?.[0]);
+    console.log("Top ask:", orderbook.asks?.[0]);
   } catch (error) {
     console.error("❌ Orderbook failed:", error);
   }

@@ -16,50 +16,27 @@ export class AevoExchange extends BaseExchange {
     tickers?: string[],
   ): Promise<{ [key: string]: FundingData }> {
     return this.withRetry(async () => {
-      // Get all markets first
-      const markets = await this.api.getMarkets();
-
-      // Filter for active perpetuals
-      const activePerps = markets.filter(
-        (market: any) =>
-          market.is_active && market.instrument_name.endsWith("-PERP"),
-      );
+      const data = await this.api.getFundingAndOpenInterest();
 
       const result: { [key: string]: FundingData } = {};
 
-      // For each active perpetual, get its funding and OI data
-      const promises = activePerps.map(async (market: any) => {
-        try {
-          const instrument = await this.api.getInstrument(
-            market.instrument_name,
-          );
+      // Filter to only include requested tickers if specified
+      const filteredData = tickers
+        ? data.filter((item: any) => {
+            const symbol = item.ticker_id.replace("-PERP", "-USD");
+            return tickers.includes(symbol);
+          })
+        : data;
 
-          // Keep the -PERP format
-          result[market.instrument_name] = {
-            fundingRate: instrument.funding_rate || "0",
-            openInterest: instrument.markets?.total_oi || "0",
-          };
-        } catch (error) {
-          console.warn(
-            `Failed to get data for ${market.instrument_name}:`,
-            error,
-          );
-        }
-      });
+      // Transform each market data
+      for (const market of filteredData) {
+        // Convert ticker_id from XXX-PERP to XXX-USD
+        const symbol = market.ticker_id.replace("-PERP", "-USD");
 
-      // Wait for all requests to complete
-      await Promise.all(promises);
-
-      // If tickers are specified (e.g., ["ETH", "BTC"]), filter for those -PERP markets
-      if (tickers && tickers.length > 0) {
-        const filteredResult: { [key: string]: FundingData } = {};
-        for (const ticker of tickers) {
-          const perpSymbol = `${ticker}-PERP`;
-          if (result[perpSymbol]) {
-            filteredResult[perpSymbol] = result[perpSymbol];
-          }
-        }
-        return filteredResult;
+        result[symbol] = {
+          fundingRate: market.funding_rate,
+          openInterest: market.open_interest,
+        };
       }
 
       return result;
@@ -68,42 +45,40 @@ export class AevoExchange extends BaseExchange {
 
   async getOrderBook(symbol: string): Promise<OrderBook> {
     return this.withRetry(async () => {
-      // If symbol doesn't end with -PERP, append it
-      const instrumentName = symbol.endsWith("-PERP")
-        ? symbol
-        : `${symbol}-PERP`;
-
+      // Convert symbol from XXX-USD to XXX-PERP for Aevo API
+      const instrumentName = symbol.replace("-USD", "-PERP");
       const data = await this.api.getOrderBook(instrumentName);
 
-      // Transform the orderbook data
+      // Transform bid/ask arrays to OrderBookLevel objects
+      const bids: OrderBookLevel[] = data.bids.map((level: string[]) => ({
+        price: level[0],
+        size: level[1],
+        count: 1, // Aevo doesn't provide count, so we default to 1
+      }));
+
+      const asks: OrderBookLevel[] = data.asks.map((level: string[]) => ({
+        price: level[0],
+        size: level[1],
+        count: 1, // Aevo doesn't provide count, so we default to 1
+      }));
+
       return {
-        bids: data.bids.map(
-          (level: any): OrderBookLevel => ({
-            price: level[0],
-            size: level[1],
-            count: 1, // Aevo doesn't provide count, so we default to 1
-          }),
-        ),
-        asks: data.asks.map(
-          (level: any): OrderBookLevel => ({
-            price: level[0],
-            size: level[1],
-            count: 1, // Aevo doesn't provide count, so we default to 1
-          }),
-        ),
-        timestamp: parseInt(data.last_updated) / 1000000 || Date.now(), // Convert nanoseconds to milliseconds
+        bids,
+        asks,
+        timestamp: data.last_updated
+          ? Math.floor(parseInt(data.last_updated) / 1000000)
+          : Date.now(), // Convert nanoseconds to milliseconds
       };
     });
   }
 
   async getAllData(orderbookTickers: string[]): Promise<ExchangeData> {
-    return this.withRetry(async () => {
-      // Get funding and OI for all markets
+    try {
+      // Get funding and OI data for all markets
       const fundingData = await this.getFundingAndOI();
 
+      // Initialize result with funding data
       const result: ExchangeData = {};
-
-      // Add funding data to result
       for (const [symbol, data] of Object.entries(fundingData)) {
         result[symbol] = {
           fundingRate: data.fundingRate,
@@ -111,32 +86,30 @@ export class AevoExchange extends BaseExchange {
         };
       }
 
-      // Get orderbook data for specified tickers (e.g., ["ETH", "BTC", "SOL"])
-      if (orderbookTickers && orderbookTickers.length > 0) {
-        const orderbookPromises = orderbookTickers.map(async (ticker) => {
-          try {
-            // Append -PERP to the ticker
-            const perpSymbol = `${ticker}-PERP`;
-            const orderbook = await this.getOrderBook(ticker); // getOrderBook will handle appending -PERP
+      // Get orderbooks for requested tickers
+      const orderBookPromises = orderbookTickers.map(async (ticker) => {
+        try {
+          const orderBook = await this.getOrderBook(ticker);
+          return { ticker, orderBook };
+        } catch (error) {
+          console.error(`Failed to get orderbook for ${ticker}:`, error);
+          return null;
+        }
+      });
 
-            if (result[perpSymbol]) {
-              result[perpSymbol].orderBook = orderbook;
-            } else {
-              result[perpSymbol] = {
-                fundingRate: "0",
-                openInterest: "0",
-                orderBook: orderbook,
-              };
-            }
-          } catch (error) {
-            console.warn(`Failed to get orderbook for ${ticker}:`, error);
-          }
-        });
+      const orderBookResults = await Promise.all(orderBookPromises);
 
-        await Promise.all(orderbookPromises);
+      // Add orderbook data to results
+      for (const orderBookResult of orderBookResults) {
+        if (orderBookResult && result[orderBookResult.ticker]) {
+          result[orderBookResult.ticker].orderBook = orderBookResult.orderBook;
+        }
       }
 
       return result;
-    });
+    } catch (error) {
+      console.error("Error getting all data from Aevo:", error);
+      throw error;
+    }
   }
 }
