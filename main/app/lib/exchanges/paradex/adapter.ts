@@ -76,10 +76,13 @@ export class ParadexExchange extends BaseExchange {
       const fundingData = await this.getFundingAndOI();
 
       // Get orderbook data for specified tickers
+      // Convert simple tickers (e.g., "ETH") to full format (e.g., "ETH-USD")
       const orderbookPromises = orderbookTickers.map(async (ticker) => {
         try {
-          const orderbook = await this.getOrderBook(ticker);
-          return { ticker, orderbook };
+          // Handle both "ETH" and "ETH-USD" formats
+          const fullTicker = ticker.includes("-") ? ticker : `${ticker}-USD`;
+          const orderbook = await this.getOrderBook(fullTicker);
+          return { ticker: fullTicker, orderbook };
         } catch (error) {
           console.error(`Failed to get orderbook for ${ticker}:`, error);
           return null;
