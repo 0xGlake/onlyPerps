@@ -6,6 +6,7 @@ const {
 // Add new exchanges here:
 const { ExtendedExchange } = require("../app/lib/exchanges/extended/adapter");
 const { AevoExchange } = require("../app/lib/exchanges/aevo/adapter");
+const { ParadexExchange } = require("../app/lib/exchanges/paradex/adapter");
 
 const ORDERBOOK_TICKERS = ["ETH", "BTC", "SOL"];
 
@@ -230,6 +231,7 @@ async function testAllExchanges() {
     // Add new exchanges here:
     new ExtendedExchange(),
     new AevoExchange(),
+    new ParadexExchange(),
   ];
 
   const allResults = [];
