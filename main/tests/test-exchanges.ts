@@ -5,6 +5,7 @@ const {
 } = require("../app/lib/exchanges/hyperliquid/adapter");
 // Add new exchanges here:
 const { ExtendedExchange } = require("../app/lib/exchanges/extended/adapter");
+const { AevoExchange } = require("../app/lib/exchanges/aevo/adapter");
 
 const ORDERBOOK_TICKERS = ["ETH", "BTC", "SOL"];
 
@@ -228,6 +229,7 @@ async function testAllExchanges() {
     new HyperliquidExchange(),
     // Add new exchanges here:
     new ExtendedExchange(),
+    new AevoExchange(),
   ];
 
   const allResults = [];

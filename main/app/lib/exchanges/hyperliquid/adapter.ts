@@ -104,7 +104,7 @@ export class HyperliquidExchange extends BaseExchange {
       // Get orderbooks only for specified tickers (individual API calls)
       const orderbookPromises = orderbookTickers.map(async (ticker) => {
         try {
-          const orderbook = await this.getOrderBook(`${ticker}-USD`);
+          const orderbook = await this.getOrderBook(`${ticker}-USD`); // TODO: CHECK IF THIS IS PERP OR SPOT MARKET
           return { ticker: `${ticker}-USD`, orderbook };
         } catch (error) {
           console.error(`Error fetching orderbook for ${ticker}:`, error);
