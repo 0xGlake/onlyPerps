@@ -27,9 +27,7 @@ export interface ExchangeData {
 export abstract class BaseExchange {
   abstract name: string;
 
-  abstract getFundingAndOI(
-    tickers: string[],
-  ): Promise<{ [key: string]: FundingData }>;
+  abstract getFundingAndOI(): Promise<{ [key: string]: FundingData }>;
   abstract getOrderBook(symbol: string): Promise<OrderBook>;
 
   // Retry logic wrapper

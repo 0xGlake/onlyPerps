@@ -7,6 +7,7 @@ const {
 const { ExtendedExchange } = require("../app/lib/exchanges/extended/adapter");
 const { AevoExchange } = require("../app/lib/exchanges/aevo/adapter");
 const { ParadexExchange } = require("../app/lib/exchanges/paradex/adapter");
+const { DydxExchange } = require("../app/lib/exchanges/dydx/adapter");
 
 const ORDERBOOK_TICKERS = ["ETH", "BTC", "SOL"];
 
@@ -72,7 +73,7 @@ async function testExchangeOrderbooks(exchange: any, tickers: string[]) {
   for (const ticker of tickers) {
     try {
       console.log(`\n  Testing ${ticker} orderbook...`);
-      const orderbook = await exchange.getOrderBook(`${ticker}-USD`);
+      const orderbook = await exchange.getOrderBook(`${ticker}-USD`); // this will cause issues, should have normalised inputs to be raw asset like "ETH"
 
       const topBid = orderbook.bids[0];
       const topAsk = orderbook.asks[0];
@@ -232,6 +233,7 @@ async function testAllExchanges() {
     new ExtendedExchange(),
     new AevoExchange(),
     new ParadexExchange(),
+    new DydxExchange(),
   ];
 
   const allResults = [];

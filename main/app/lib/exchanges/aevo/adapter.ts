@@ -12,24 +12,14 @@ export class AevoExchange extends BaseExchange {
   name = "aevo";
   private api = new AevoAPI();
 
-  async getFundingAndOI(
-    tickers?: string[],
-  ): Promise<{ [key: string]: FundingData }> {
+  async getFundingAndOI(): Promise<{ [key: string]: FundingData }> {
     return this.withRetry(async () => {
       const data = await this.api.getFundingAndOpenInterest();
 
       const result: { [key: string]: FundingData } = {};
 
-      // Filter to only include requested tickers if specified
-      const filteredData = tickers
-        ? data.filter((item: any) => {
-            const symbol = item.ticker_id.replace("-PERP", "-USD");
-            return tickers.includes(symbol);
-          })
-        : data;
-
       // Transform each market data, filtering out markets with 0 open interest
-      for (const market of filteredData) {
+      for (const market of data) {
         // Skip markets with zero open interest
         if (parseFloat(market.open_interest) === 0) {
           continue;

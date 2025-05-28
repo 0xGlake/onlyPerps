@@ -32,32 +32,3 @@ export class AevoAPI {
     return response.json();
   }
 }
-
-// Quick test - remove before production
-async function testAPI() {
-  const api = new AevoAPI();
-
-  console.log("Testing funding data...");
-  try {
-    const funding = await api.getFundingAndOpenInterest();
-    console.log(
-      "✅ Funding success, sample:",
-      JSON.stringify(funding.slice(0, 2), null, 2),
-    );
-    console.log(`Total markets: ${funding.length}`);
-  } catch (error) {
-    console.error("❌ Funding failed:", error);
-  }
-
-  console.log("\nTesting orderbook for ETH-PERP...");
-  try {
-    const orderbook = await api.getOrderBook("ETH-PERP");
-    console.log("✅ Orderbook success, structure:", Object.keys(orderbook));
-    console.log("Top bid:", orderbook.bids?.[0]);
-    console.log("Top ask:", orderbook.asks?.[0]);
-  } catch (error) {
-    console.error("❌ Orderbook failed:", error);
-  }
-}
-
-testAPI();
