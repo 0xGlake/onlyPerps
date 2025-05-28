@@ -1,24 +1,23 @@
-// tests/test-exchanges-require.ts - Full test suite with require syntax
-// npx ts-node tests/test-exchanges.ts
+// tests/test-exchanges-generic.ts - Generic test suite for any exchange
+
 const {
   HyperliquidExchange,
 } = require("../app/lib/exchanges/hyperliquid/adapter");
+// Add new exchanges here:
 
 const ORDERBOOK_TICKERS = ["ETH", "BTC", "SOL"];
 
-async function testHyperliquidFunding() {
+async function testExchangeFunding(exchange: any) {
   console.log(
-    "\n🔥 Testing Hyperliquid Funding Rates & Open Interest (ALL assets)...",
+    `\n🔥 Testing ${exchange.name.toUpperCase()} Funding Rates & Open Interest (ALL assets)...`,
   );
-  console.log("================================================");
-
-  const hyperliquid = new HyperliquidExchange();
+  console.log("=".repeat(60));
 
   try {
-    const fundingData = await hyperliquid.getFundingAndOI();
+    const fundingData = await exchange.getFundingAndOI();
 
     console.log(
-      `✅ Success! Retrieved ${Object.keys(fundingData).length} assets`,
+      `✅ Success! Retrieved ${Object.keys(fundingData).length} assets from ${exchange.name}`,
     );
     console.log("\n📊 Sample funding data:");
 
@@ -36,7 +35,7 @@ async function testHyperliquidFunding() {
       );
     }
 
-    // Show some interesting stats
+    // Show funding stats
     const fundingRates = Object.values(fundingData).map((d: any) =>
       parseFloat(d.fundingRate),
     );
@@ -54,21 +53,23 @@ async function testHyperliquidFunding() {
 
     return fundingData;
   } catch (error: any) {
-    console.error("❌ Funding test failed:", error.message);
+    console.error(`❌ ${exchange.name} funding test failed:`, error.message);
     return null;
   }
 }
 
-async function testHyperliquidOrderbooks() {
-  console.log("\n📚 Testing Hyperliquid Order Books (ETH, BTC, SOL only)...");
-  console.log("=====================================================");
+async function testExchangeOrderbooks(exchange: any, tickers: string[]) {
+  console.log(
+    `\n📚 Testing ${exchange.name.toUpperCase()} Order Books (${tickers.join(", ")})...`,
+  );
+  console.log("=".repeat(60));
 
-  const hyperliquid = new HyperliquidExchange();
+  const results = [];
 
-  for (const ticker of ORDERBOOK_TICKERS) {
+  for (const ticker of tickers) {
     try {
       console.log(`\n  Testing ${ticker} orderbook...`);
-      const orderbook = await hyperliquid.getOrderBook(`${ticker}-USD`);
+      const orderbook = await exchange.getOrderBook(`${ticker}-USD`);
 
       const topBid = orderbook.bids[0];
       const topAsk = orderbook.asks[0];
@@ -76,10 +77,10 @@ async function testHyperliquidOrderbooks() {
       const spreadBps = (spread / parseFloat(topBid.price)) * 10000;
 
       console.log(`  ✅ ${ticker}-USD:`);
-      console.log(`     Top Bid: ${topBid.price} (${topBid.size} size)`);
-      console.log(`     Top Ask: ${topAsk.price} (${topAsk.size} size)`);
+      console.log(`     Top Bid: $${topBid.price} (${topBid.size} size)`);
+      console.log(`     Top Ask: $${topAsk.price} (${topAsk.size} size)`);
       console.log(
-        `     Spread:  ${spread.toFixed(4)} (${spreadBps.toFixed(2)} bps)`,
+        `     Spread:  $${spread.toFixed(4)} (${spreadBps.toFixed(2)} bps)`,
       );
       console.log(
         `     Levels:  ${orderbook.bids.length} bids, ${orderbook.asks.length} asks`,
@@ -87,20 +88,28 @@ async function testHyperliquidOrderbooks() {
       console.log(
         `     Time:    ${new Date(orderbook.timestamp).toISOString()}`,
       );
+
+      results.push({ ticker, success: true, orderbook });
     } catch (error: any) {
       console.error(`  ❌ ${ticker} orderbook failed:`, error.message);
+      results.push({ ticker, success: false, error: error.message });
     }
   }
+
+  return results;
 }
 
-async function testCombinedData() {
-  console.log("\n🔄 Testing Combined getAllData Method (Production Method)...");
-  console.log("=========================================================");
-
-  const hyperliquid = new HyperliquidExchange();
+async function testExchangeCombinedData(
+  exchange: any,
+  orderbookTickers: string[],
+) {
+  console.log(
+    `\n🔄 Testing ${exchange.name.toUpperCase()} Combined getAllData Method...`,
+  );
+  console.log("=".repeat(60));
 
   try {
-    const allData = await hyperliquid.getAllData(ORDERBOOK_TICKERS);
+    const allData = await exchange.getAllData(orderbookTickers);
 
     console.log(
       `✅ Combined data retrieved for ${Object.keys(allData).length} assets total`,
@@ -118,7 +127,7 @@ async function testCombinedData() {
     console.log(`   ${withoutOrderbooks} assets have funding only`);
 
     console.log("\n📋 Major assets (with orderbooks):");
-    for (const ticker of ORDERBOOK_TICKERS) {
+    for (const ticker of orderbookTickers) {
       const data = allData[`${ticker}-USD`];
       if (data) {
         const hasOB = data.orderBook ? "✅" : "❌";
@@ -132,7 +141,7 @@ async function testCombinedData() {
     const minorAssets = Object.entries(allData)
       .filter(
         ([symbol, data]) =>
-          !ORDERBOOK_TICKERS.some((t) => symbol === `${t}-USD`),
+          !orderbookTickers.some((t) => symbol === `${t}-USD`),
       )
       .slice(0, 5);
 
@@ -144,75 +153,108 @@ async function testCombinedData() {
 
     return allData;
   } catch (error: any) {
-    console.error("❌ Combined test failed:", error.message);
+    console.error(`❌ ${exchange.name} combined test failed:`, error.message);
     return null;
   }
 }
 
-async function testLambdaSimulation() {
-  console.log("\n🚀 Testing Lambda Function Simulation...");
-  console.log("=======================================");
+async function runExchangeTestSuite(
+  exchange: any,
+  orderbookTickers: string[] = ORDERBOOK_TICKERS,
+) {
+  console.log(`\n🧪 TESTING ${exchange.name.toUpperCase()} EXCHANGE`);
+  console.log("=".repeat(50));
+
+  const results = {
+    exchange: exchange.name,
+    funding: null as any,
+    orderbooks: null as any,
+    combined: null as any,
+    success: false,
+  };
 
   try {
-    // This mimics what your Lambda will do
-    console.log("Simulating: aggregateExchangeData()...");
+    // Test funding rates
+    results.funding = await testExchangeFunding(exchange);
 
-    const hyperliquid = new HyperliquidExchange();
-    const dataHyperliquid = await hyperliquid
-      .getAllData(ORDERBOOK_TICKERS)
-      .catch((err: any) => {
-        console.error("Error fetching data from Hyperliquid:", err);
-        return null;
-      });
+    // Test orderbooks
+    results.orderbooks = await testExchangeOrderbooks(
+      exchange,
+      orderbookTickers,
+    );
 
-    const exchangeData = { dataHyperliquid };
+    // Test combined data
+    results.combined = await testExchangeCombinedData(
+      exchange,
+      orderbookTickers,
+    );
 
-    if (exchangeData.dataHyperliquid) {
-      console.log("✅ Lambda simulation successful!");
-      console.log(
-        `   Would store ${Object.keys(exchangeData.dataHyperliquid).length} assets to Redis`,
-      );
+    const fundingSuccess = !!results.funding;
+    const orderbookSuccess =
+      results.orderbooks?.some((r: any) => r.success) || false;
+    const combinedSuccess = !!results.combined;
 
-      // Show what would go to Redis
-      const fundingCount = Object.keys(exchangeData.dataHyperliquid).length;
-      const orderbookCount = Object.values(exchangeData.dataHyperliquid).filter(
-        (d: any) => d.orderBook,
-      ).length;
+    console.log(`\n📊 ${exchange.name.toUpperCase()} TEST SUMMARY:`);
+    console.log(`   Funding Rates: ${fundingSuccess ? "✅" : "❌"}`);
+    console.log(`   Order Books:   ${orderbookSuccess ? "✅" : "❌"}`);
+    console.log(`   Combined Data: ${combinedSuccess ? "✅" : "❌"}`);
 
-      console.log(`   Redis keys to create:`);
-      console.log(`     ${fundingCount} funding rate keys`);
-      console.log(`     ${orderbookCount} orderbook keys`);
-      console.log(`     1 last_update key`);
-      console.log(`     1 exchange_status key`);
+    results.success = fundingSuccess && orderbookSuccess && combinedSuccess;
+
+    if (results.success) {
+      console.log(`🎉 ${exchange.name.toUpperCase()} INTEGRATION SUCCESSFUL!`);
     } else {
-      console.log("❌ Lambda simulation failed - no data returned");
+      console.log(
+        `⚠️  ${exchange.name.toUpperCase()} has some issues - review above`,
+      );
     }
   } catch (error: any) {
-    console.error("❌ Lambda simulation error:", error.message);
+    console.error(
+      `💥 ${exchange.name.toUpperCase()} test suite failed:`,
+      error,
+    );
+    results.success = false;
+  }
+
+  return results;
+}
+
+async function testAllExchanges() {
+  console.log("🚀 EXCHANGE INTEGRATION TEST SUITE");
+  console.log("==================================");
+
+  const exchanges = [
+    new HyperliquidExchange(),
+    // Add new exchanges here:
+  ];
+
+  const allResults = [];
+
+  for (const exchange of exchanges) {
+    const result = await runExchangeTestSuite(exchange);
+    allResults.push(result);
+  }
+
+  // Final summary
+  console.log("\n🏁 FINAL SUMMARY");
+  console.log("================");
+
+  allResults.forEach((result) => {
+    const status = result.success ? "✅" : "❌";
+    console.log(
+      `${status} ${result.exchange.toUpperCase()}: ${result.success ? "READY FOR PRODUCTION" : "NEEDS FIXES"}`,
+    );
+  });
+
+  const successCount = allResults.filter((r) => r.success).length;
+  console.log(
+    `\n🎯 ${successCount}/${allResults.length} exchanges ready for deployment`,
+  );
+
+  if (successCount === allResults.length) {
+    console.log("🚀 ALL EXCHANGES READY FOR AWS LAMBDA DEPLOYMENT!");
   }
 }
 
-async function runAllTests() {
-  console.log("🧪 STARTING EXCHANGE TESTS");
-  console.log("==========================");
-  console.log("This will test the actual Hyperliquid API calls...\n");
-
-  try {
-    // Run tests in sequence
-    await testHyperliquidFunding();
-    await testHyperliquidOrderbooks();
-    await testCombinedData();
-    await testLambdaSimulation();
-
-    console.log("\n🎉 ALL TESTS COMPLETED!");
-    console.log("=======================");
-    console.log("✅ Your exchange implementation is working correctly");
-    console.log("✅ Ready to deploy to AWS Lambda with Redis");
-  } catch (error: any) {
-    console.error("\n💥 TEST SUITE FAILED:", error);
-    console.log("Fix the errors above before deploying to production");
-  }
-}
-
-// Run the tests
-runAllTests();
+// Run all tests
+testAllExchanges();
