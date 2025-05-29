@@ -8,6 +8,7 @@ const { ExtendedExchange } = require("../app/lib/exchanges/extended/adapter");
 const { AevoExchange } = require("../app/lib/exchanges/aevo/adapter");
 const { ParadexExchange } = require("../app/lib/exchanges/paradex/adapter");
 const { DydxExchange } = require("../app/lib/exchanges/dydx/adapter");
+const { VertexExchange } = require("../app/lib/exchanges/vertex/adapter");
 
 const ORDERBOOK_TICKERS = ["ETH", "BTC", "SOL"];
 
@@ -234,6 +235,7 @@ async function testAllExchanges() {
     new AevoExchange(),
     new ParadexExchange(),
     new DydxExchange(),
+    new VertexExchange(),
   ];
 
   const allResults = [];
