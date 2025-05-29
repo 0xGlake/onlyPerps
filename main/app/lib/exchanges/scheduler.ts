@@ -1,9 +1,13 @@
 // index.ts - AWS Lambda Entry Point with All Data Collection Logic
 import redis from "../redis/client";
 import { REDIS_KEYS } from "../redis/keys";
+
 import { HyperliquidExchange } from "../exchanges/hyperliquid/adapter";
-// Import future exchanges here
-// import { BinanceExchange } from './lib/exchanges/binance/adapter';
+import { ExtendedExchange } from "./extended/adapter";
+import { AevoExchange } from "./aevo/adapter";
+import { ParadexExchange } from "./paradex/adapter";
+import { DydxExchange } from "./dydx/adapter";
+import { VertexExchange } from "./vertex/adapter";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -13,14 +17,20 @@ const DATA_TTL = 3600; // 1 hour TTL (Lambda runs every 30 mins)
 
 interface ExchangeData {
   dataHyperliquid: Record<string, any> | null;
-  // Add future exchanges here
-  // dataBinance: Record<string, any> | null;
-  // dataCoinbase: Record<string, any> | null;
+  dataExtended: Record<string, any> | null;
+  dataAevo: Record<string, any> | null;
+  dataParadex: Record<string, any> | null;
+  dataDydx: Record<string, any> | null;
+  dataVertex: Record<string, any> | null;
 }
 
 // Initialize exchanges
 const hyperliquid = new HyperliquidExchange();
-// const binance = new BinanceExchange();
+const extended = new ExtendedExchange();
+const aevo = new AevoExchange();
+const paradex = new ParadexExchange();
+const dydx = new DydxExchange();
+const vertex = new VertexExchange();
 
 export async function aggregate(): Promise<ExchangeData> {
   const promises = [
@@ -28,18 +38,44 @@ export async function aggregate(): Promise<ExchangeData> {
       console.error("Error fetching data from Hyperliquid:", err);
       return null;
     }),
-    // Add future exchanges here following the same pattern
-    // binance.getAllData(TICKERS).catch(err => {
-    //   console.error('Error fetching data from Binance:', err);
-    //   return null;
-    // }),
+    extended.getAllData(TICKERS).catch((err) => {
+      console.error("Error fetching data from Extended:", err);
+      return null;
+    }),
+    aevo.getAllData(TICKERS).catch((err) => {
+      console.error("Error fetching data from Aevo:", err);
+      return null;
+    }),
+    paradex.getAllData(TICKERS).catch((err) => {
+      console.error("Error fetching data from Paradex:", err);
+      return null;
+    }),
+    dydx.getAllData(TICKERS).catch((err) => {
+      console.error("Error fetching data from Dydx:", err);
+      return null;
+    }),
+    vertex.getAllData(TICKERS).catch((err) => {
+      console.error("Error fetching data from Vertex:", err);
+      return null;
+    }),
   ];
 
-  const [dataHyperliquid] = await Promise.all(promises);
+  const [
+    dataHyperliquid,
+    dataExtended,
+    dataAevo,
+    dataParadex,
+    dataDydx,
+    dataVertex,
+  ] = await Promise.all(promises);
 
   return {
     dataHyperliquid,
-    // dataBinance,
+    dataExtended,
+    dataAevo,
+    dataParadex,
+    dataDydx,
+    dataVertex,
   };
 }
 
@@ -47,15 +83,30 @@ async function storeData(data: ExchangeData) {
   const pipeline = redis.pipeline();
   const timestamp = Date.now();
 
-  // Store Hyperliquid data
+  // Store data
   if (data.dataHyperliquid) {
     await storeExchangeData("hyperliquid", data.dataHyperliquid, pipeline);
   }
 
-  // Add future exchanges here
-  // if (data.dataBinance) {
-  //   await storeExchangeData('binance', data.dataBinance, pipeline);
-  // }
+  if (data.dataExtended) {
+    await storeExchangeData("extended", data.dataExtended, pipeline);
+  }
+
+  if (data.dataAevo) {
+    await storeExchangeData("aevo", data.dataAevo, pipeline);
+  }
+
+  if (data.dataParadex) {
+    await storeExchangeData("paradex", data.dataParadex, pipeline);
+  }
+
+  if (data.dataDydx) {
+    await storeExchangeData("dydx", data.dataDydx, pipeline);
+  }
+
+  if (data.dataVertex) {
+    await storeExchangeData("vertex", data.dataVertex, pipeline);
+  }
 
   // Update last successful update timestamp
   pipeline.set("last_successful_update", timestamp);
@@ -143,7 +194,11 @@ export const handler = async (event: any, context: any) => {
         timestamp: new Date().toISOString(),
         dataCollected: {
           hyperliquid: !!exchangeData.dataHyperliquid,
-          // Add other exchanges here as you implement them
+          extended: !!exchangeData.dataExtended,
+          aevo: !!exchangeData.dataAevo,
+          paradex: !!exchangeData.dataParadex,
+          dydx: !!exchangeData.dataDydx,
+          vertex: !!exchangeData.dataVertex,
         },
       }),
     };
