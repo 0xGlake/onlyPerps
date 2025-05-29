@@ -21,8 +21,8 @@ export class DriftAPI {
     const params = new URLSearchParams({
       marketName: marketName,
       depth: "30",
-      includeOracle: "true",
-      includeVamm: "true",
+      includeOracle: "false",
+      includeVamm: "false",
     });
 
     const response = await fetch(`${this.orderbookUrl}?${params.toString()}`, {
