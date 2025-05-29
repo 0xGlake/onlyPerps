@@ -41,7 +41,7 @@ export class DriftExchange extends BaseExchange {
       const data = await this.api.getOrderBook(marketName);
 
       const PRICE_DIVISOR = 1000000;
-      const SIZE_DIVISOR = 1000000;
+      const SIZE_DIVISOR = 1000000000;
 
       const bids: OrderBookLevel[] = data.bids
         ? data.bids.map((bid: any) => ({
