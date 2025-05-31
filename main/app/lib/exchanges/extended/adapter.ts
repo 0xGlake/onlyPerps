@@ -79,22 +79,19 @@ export class ExtendedExchange extends BaseExchange {
 
       // Get orderbooks only for specified tickers (individual API calls)
       const orderbookPromises = orderbookTickers.map(async (ticker) => {
+        // Format the ticker to match funding data format
+        const formattedTicker = ticker.endsWith("-USD")
+          ? ticker
+          : `${ticker}-USD`;
+
         try {
-          // Format the ticker to match funding data format
-          const formattedTicker = ticker.endsWith("-USD")
-            ? ticker
-            : `${ticker}-USD`;
           const orderbook = await this.getOrderBook(ticker);
           return { ticker: formattedTicker, orderbook };
         } catch (error) {
           console.error(`Error fetching orderbook for ${ticker}:`, error);
-          const formattedTicker = ticker.endsWith("-USD")
-            ? ticker
-            : `${ticker}-USD`;
           return { ticker: formattedTicker, orderbook: null };
         }
       });
-
       const orderbookResults = await Promise.all(orderbookPromises);
 
       // Combine funding + orderbook data
