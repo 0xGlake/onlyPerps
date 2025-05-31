@@ -21,6 +21,10 @@ export class DydxExchange extends BaseExchange {
       for (const [marketId, market] of Object.entries(data.markets || {})) {
         const marketData = market as any;
 
+        if (marketData.openInterest == 0) {
+          continue;
+        }
+
         // dydx already uses ticker format like "BTC-USD"
         const ticker = marketData.ticker;
 
@@ -60,43 +64,51 @@ export class DydxExchange extends BaseExchange {
   }
 
   async getAllData(orderbookTickers: string[]): Promise<ExchangeData> {
-    return this.withRetry(async () => {
-      // Normalize tickers to include -USD suffix
-      const normalizedTickers = orderbookTickers.map((ticker) =>
-        ticker.includes("-") ? ticker : `${ticker}-USD`,
-      );
-
-      // Get funding and OI data for all tickers
+    try {
+      // Get ALL funding and open interest data
       const fundingData = await this.getFundingAndOI();
 
-      // Build the result object
+      // Normalize tickers and get orderbooks only for specified tickers (individual API calls)
+      const orderbookPromises = orderbookTickers.map(async (ticker) => {
+        const normalizedTicker = ticker.includes("-")
+          ? ticker
+          : `${ticker}-USD`;
+        try {
+          const orderbook = await this.getOrderBook(normalizedTicker);
+          return { ticker: normalizedTicker, orderbook };
+        } catch (error) {
+          console.error(
+            `Error fetching orderbook for ${normalizedTicker}:`,
+            error,
+          );
+          return { ticker: normalizedTicker, orderbook: null };
+        }
+      });
+
+      const orderbookResults = await Promise.all(orderbookPromises);
+
+      // Combine funding + orderbook data
       const result: ExchangeData = {};
 
-      // Get orderbook for each requested ticker
-      for (const ticker of normalizedTickers) {
-        if (fundingData[ticker]) {
-          try {
-            const orderBook = await this.getOrderBook(ticker);
-            result[ticker] = {
-              fundingData: fundingData[ticker],
-              orderBook,
-            };
-          } catch (error) {
-            console.warn(`Failed to get orderbook for ${ticker}:`, error);
-            // Include funding data even if orderbook fails
-            result[ticker] = {
-              fundingData: fundingData[ticker],
-              orderBook: {
-                bids: [],
-                asks: [],
-                timestamp: Date.now(),
-              },
-            };
-          }
+      // Add ALL funding data
+      for (const [symbol, funding] of Object.entries(fundingData)) {
+        result[symbol] = {
+          fundingData: funding,
+        };
+      }
+
+      // Add orderbooks for the specific tickers
+      for (const orderbookResult of orderbookResults) {
+        if (result[orderbookResult.ticker]) {
+          result[orderbookResult.ticker].orderBook =
+            orderbookResult.orderbook || undefined;
         }
       }
 
       return result;
-    });
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      return {};
+    }
   }
 }

@@ -24,7 +24,11 @@ export class ExtendedExchange extends BaseExchange {
 
       for (const market of response.data) {
         // Only include active markets
-        if (market.status !== "ACTIVE") continue;
+        if (
+          market.status !== "ACTIVE" ||
+          parseFloat(market.marketStats.openInterest) === 0
+        )
+          continue;
 
         result[market.name] = {
           fundingRate: market.marketStats.fundingRate,
@@ -38,7 +42,11 @@ export class ExtendedExchange extends BaseExchange {
 
   async getOrderBook(symbol: string): Promise<OrderBook> {
     return this.withRetry(async () => {
-      const response = await this.api.getOrderBook(symbol);
+      const formattedSymbol = symbol.endsWith("-USD")
+        ? symbol
+        : `${symbol}-USD`;
+
+      const response = await this.api.getOrderBook(formattedSymbol);
 
       if (response.status !== "OK") {
         throw new Error(`API returned non-OK status: ${response.status}`);
@@ -72,13 +80,11 @@ export class ExtendedExchange extends BaseExchange {
       // Get orderbooks only for specified tickers (individual API calls)
       const orderbookPromises = orderbookTickers.map(async (ticker) => {
         try {
-          // Normalize ticker if needed (adjust this based on your exchange's format)
-          const normalizedTicker = ticker; // or `${ticker}-USD` or other normalization
-          const orderbook = await this.getOrderBook(normalizedTicker);
-          return { ticker: normalizedTicker, orderbook };
+          const orderbook = await this.getOrderBook(ticker);
+          return { ticker, orderbook };
         } catch (error) {
-          console.error(`Error fetching orderbook for ${ticker}:`, error);
-          return { ticker: ticker, orderbook: null };
+          console.error("Error fetching data:", error);
+          return { ticker, orderbook: null };
         }
       });
 
@@ -87,7 +93,7 @@ export class ExtendedExchange extends BaseExchange {
       // Combine funding + orderbook data
       const result: ExchangeData = {};
 
-      // Add ALL funding data
+      // Add ALL funding data (not just for orderbookTickers)
       for (const [symbol, funding] of Object.entries(fundingData)) {
         result[symbol] = {
           fundingData: funding,
@@ -104,7 +110,7 @@ export class ExtendedExchange extends BaseExchange {
 
       return result;
     } catch (error) {
-      console.error("Error fetching exchange data:", error);
+      console.error("Error fetching data:", error);
       return {};
     }
   }

@@ -78,46 +78,51 @@ export class AevoExchange extends BaseExchange {
 
   async getAllData(orderbookTickers: string[]): Promise<ExchangeData> {
     try {
-      // Get funding and OI data for all markets
+      // Get ALL funding and open interest data
       const fundingData = await this.getFundingAndOI();
 
-      // Initialize result with funding data
-      const result: ExchangeData = {};
-      for (const [symbol, data] of Object.entries(fundingData)) {
-        result[symbol] = {
-          fundingData: {
-            fundingRate: data.fundingRate,
-            openInterest: data.openInterest,
-          },
-        };
-      }
-
-      // Get orderbooks for requested tickers
-      const orderBookPromises = orderbookTickers.map(async (ticker) => {
+      // Get orderbooks only for specified tickers (individual API calls)
+      const orderbookPromises = orderbookTickers.map(async (ticker) => {
         try {
-          // The ticker might be just "ETH" or "ETH-USD"
-          const resultKey = ticker.includes("-USD") ? ticker : `${ticker}-USD`;
-          const orderBook = await this.getOrderBook(ticker);
-          return { ticker: resultKey, orderBook };
+          // Normalize ticker to ensure it has -USD suffix
+          const normalizedTicker = ticker.includes("-USD")
+            ? ticker
+            : `${ticker}-USD`;
+          const orderbook = await this.getOrderBook(normalizedTicker);
+          return { ticker: normalizedTicker, orderbook };
         } catch (error) {
-          console.error(`Failed to get orderbook for ${ticker}:`, error);
-          return null;
+          console.error(`Error fetching orderbook for ${ticker}:`, error);
+          const normalizedTicker = ticker.includes("-USD")
+            ? ticker
+            : `${ticker}-USD`;
+          return { ticker: normalizedTicker, orderbook: null };
         }
       });
 
-      const orderBookResults = await Promise.all(orderBookPromises);
+      const orderbookResults = await Promise.all(orderbookPromises);
 
-      // Add orderbook data to results
-      for (const orderBookResult of orderBookResults) {
-        if (orderBookResult && result[orderBookResult.ticker]) {
-          result[orderBookResult.ticker].orderBook = orderBookResult.orderBook;
+      // Combine funding + orderbook data
+      const result: ExchangeData = {};
+
+      // Add ALL funding data
+      for (const [symbol, funding] of Object.entries(fundingData)) {
+        result[symbol] = {
+          fundingData: funding,
+        };
+      }
+
+      // Add orderbooks for the specific tickers
+      for (const orderbookResult of orderbookResults) {
+        if (result[orderbookResult.ticker]) {
+          result[orderbookResult.ticker].orderBook =
+            orderbookResult.orderbook || undefined;
         }
       }
 
       return result;
     } catch (error) {
-      console.error("Error getting all data from Aevo:", error);
-      throw error;
+      console.error("Error fetching Aevo data:", error);
+      return {};
     }
   }
 }

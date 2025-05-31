@@ -37,7 +37,8 @@ export class ParadexExchange extends BaseExchange {
         // Only add if we have funding rate and open interest
         if (
           market.funding_rate !== undefined &&
-          market.open_interest !== undefined
+          market.open_interest !== undefined &&
+          parseFloat(market.open_interest) !== 0
         ) {
           result[standardSymbol] = {
             fundingRate: market.funding_rate,
@@ -72,11 +73,10 @@ export class ParadexExchange extends BaseExchange {
 
   async getAllData(orderbookTickers: string[]): Promise<ExchangeData> {
     try {
-      // Get funding and OI data for all markets
+      // Get ALL funding and open interest data
       const fundingData = await this.getFundingAndOI();
 
-      // Get orderbook data for specified tickers
-      // Convert simple tickers (e.g., "ETH") to full format (e.g., "ETH-USD")
+      // Get orderbooks only for specified tickers (individual API calls)
       const orderbookPromises = orderbookTickers.map(async (ticker) => {
         try {
           // Handle both "ETH" and "ETH-USD" formats
@@ -84,32 +84,37 @@ export class ParadexExchange extends BaseExchange {
           const orderbook = await this.getOrderBook(fullTicker);
           return { ticker: fullTicker, orderbook };
         } catch (error) {
-          console.error(`Failed to get orderbook for ${ticker}:`, error);
-          return null;
+          console.error(`Error fetching orderbook for ${ticker}:`, error);
+          // Handle both "ETH" and "ETH-USD" formats for consistency
+          const fullTicker = ticker.includes("-") ? ticker : `${ticker}-USD`;
+          return { ticker: fullTicker, orderbook: null };
         }
       });
 
       const orderbookResults = await Promise.all(orderbookPromises);
 
-      // Combine all data
+      // Combine funding + orderbook data
       const result: ExchangeData = {};
 
-      // Add funding data
-      for (const [ticker, data] of Object.entries(fundingData)) {
-        result[ticker] = { fundingData: data };
+      // Add ALL funding data
+      for (const [symbol, funding] of Object.entries(fundingData)) {
+        result[symbol] = {
+          fundingData: funding,
+        };
       }
 
-      // Add orderbook data
+      // Add orderbooks for the specific tickers
       for (const orderbookResult of orderbookResults) {
-        if (orderbookResult && result[orderbookResult.ticker]) {
-          result[orderbookResult.ticker].orderBook = orderbookResult.orderbook;
+        if (result[orderbookResult.ticker]) {
+          result[orderbookResult.ticker].orderBook =
+            orderbookResult.orderbook || undefined;
         }
       }
 
       return result;
     } catch (error) {
-      console.error("Error getting all data from Paradex:", error);
-      throw error;
+      console.error("Error fetching Paradex data:", error);
+      return {};
     }
   }
 }

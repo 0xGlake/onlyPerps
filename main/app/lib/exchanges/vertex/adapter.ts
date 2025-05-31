@@ -35,6 +35,10 @@ export class VertexExchange extends BaseExchange {
         const standardSymbol = this.toStandardSymbol(tickerId);
         const contract = contractData as any;
 
+        if (parseFloat(contract.open_interest) === 0) {
+          continue;
+        }
+
         result[standardSymbol] = {
           fundingRate: contract.funding_rate.toString(),
           openInterest: contract.open_interest.toString(),
@@ -69,50 +73,54 @@ export class VertexExchange extends BaseExchange {
   }
 
   async getAllData(orderbookTickers: string[]): Promise<ExchangeData> {
-    return this.withRetry(async () => {
-      // Get funding and OI data for all available contracts
+    try {
+      // Get ALL funding and open interest data
       const fundingData = await this.getFundingAndOI();
 
+      // Get orderbooks only for specified tickers (individual API calls)
+      const orderbookPromises = orderbookTickers.map(async (ticker) => {
+        try {
+          const standardSymbol = ticker.includes("-USD")
+            ? ticker
+            : `${ticker}-USD`;
+          const orderbook = await this.getOrderBook(standardSymbol);
+          return { ticker: standardSymbol, orderbook };
+        } catch (error) {
+          const standardSymbol = ticker.includes("-USD")
+            ? ticker
+            : `${ticker}-USD`;
+          console.error(
+            `Error fetching orderbook for ${standardSymbol}:`,
+            error,
+          );
+          return { ticker: standardSymbol, orderbook: null };
+        }
+      });
+
+      const orderbookResults = await Promise.all(orderbookPromises);
+
+      // Combine funding + orderbook data
       const result: ExchangeData = {};
 
-      // Process each requested ticker
-      for (const ticker of orderbookTickers) {
-        const standardSymbol = ticker.includes("-USD")
-          ? ticker
-          : `${ticker}-USD`;
+      // Add ALL funding data
+      for (const [symbol, funding] of Object.entries(fundingData)) {
+        result[symbol] = {
+          fundingData: funding,
+        };
+      }
 
-        try {
-          // Get orderbook for this specific ticker
-          const orderbook = await this.getOrderBook(standardSymbol);
-
-          // Combine funding/OI data with orderbook
-          result[standardSymbol] = {
-            fundingData: {
-              fundingRate: fundingData[standardSymbol]?.fundingRate || "0",
-              openInterest: fundingData[standardSymbol]?.openInterest || "0",
-            },
-            orderBook: orderbook,
-          };
-        } catch (error) {
-          console.warn(`Failed to get data for ${standardSymbol}:`, error);
-          // Still include the ticker with funding data if available
-          if (fundingData[standardSymbol]) {
-            result[standardSymbol] = {
-              fundingData: {
-                fundingRate: fundingData[standardSymbol].fundingRate,
-                openInterest: fundingData[standardSymbol].openInterest,
-              },
-              orderBook: {
-                bids: [],
-                asks: [],
-                timestamp: Date.now(),
-              },
-            };
-          }
+      // Add orderbooks for the specific tickers
+      for (const orderbookResult of orderbookResults) {
+        if (result[orderbookResult.ticker]) {
+          result[orderbookResult.ticker].orderBook =
+            orderbookResult.orderbook || undefined;
         }
       }
 
       return result;
-    });
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      return {};
+    }
   }
 }

@@ -20,8 +20,14 @@ export class DriftExchange extends BaseExchange {
 
       if (data.contracts && Array.isArray(data.contracts)) {
         for (const contract of data.contracts) {
-          // Convert base_currency to standard format (e.g., "SOL" -> "SOL-USD")
-          const symbol = `${contract.base_currency}-USD`;
+          if (
+            !contract.ticker_id.endsWith("-PERP") ||
+            contract.open_interest === 0
+          ) {
+            continue;
+          }
+
+          const symbol = contract.ticker_id.replace("-PERP", "-USD");
 
           result[symbol] = {
             fundingRate: contract.funding_rate,
@@ -64,48 +70,57 @@ export class DriftExchange extends BaseExchange {
       };
     });
   }
-
   async getAllData(orderbookTickers: string[]): Promise<ExchangeData> {
     try {
-      // Get funding and OI data for all symbols
+      // Get ALL funding and open interest data
       const fundingData = await this.getFundingAndOI();
 
-      const result: ExchangeData = {};
-
-      // Process each requested ticker
-      for (const ticker of orderbookTickers) {
-        // Normalize ticker format: "ETH" -> "ETH-USD" or keep "ETH-USD" as is
-        const normalizedTicker = ticker.includes("-")
-          ? ticker
-          : `${ticker}-USD`;
-
+      // Get orderbooks only for specified tickers (individual API calls)
+      const orderbookPromises = orderbookTickers.map(async (ticker) => {
         try {
-          // Get orderbook for this ticker
-          const orderBook = await this.getOrderBook(normalizedTicker);
-
-          // Only include if we have funding data for this symbol
-          if (fundingData[normalizedTicker]) {
-            result[normalizedTicker] = {
-              fundingData: {
-                fundingRate: fundingData[normalizedTicker].fundingRate,
-                openInterest: fundingData[normalizedTicker].openInterest,
-              },
-              orderBook: orderBook,
-            };
-          }
+          // Normalize ticker format: "ETH" -> "ETH-USD" or keep "ETH-USD" as is
+          const normalizedTicker = ticker.includes("-")
+            ? ticker
+            : `${ticker}-USD`;
+          const orderbook = await this.getOrderBook(normalizedTicker);
+          return { ticker: normalizedTicker, orderbook };
         } catch (error) {
-          console.warn(
-            `Failed to get orderbook for ${normalizedTicker}:`,
+          // Normalize ticker for error case too
+          const normalizedTicker = ticker.includes("-")
+            ? ticker
+            : `${ticker}-USD`;
+          console.error(
+            `Error fetching orderbook for ${normalizedTicker}:`,
             error,
           );
-          // Continue with other symbols
+          return { ticker: normalizedTicker, orderbook: null };
+        }
+      });
+
+      const orderbookResults = await Promise.all(orderbookPromises);
+
+      // Combine funding + orderbook data
+      const result: ExchangeData = {};
+
+      // Add ALL funding data
+      for (const [symbol, funding] of Object.entries(fundingData)) {
+        result[symbol] = {
+          fundingData: funding,
+        };
+      }
+
+      // Add orderbooks for the specific tickers
+      for (const orderbookResult of orderbookResults) {
+        if (result[orderbookResult.ticker]) {
+          result[orderbookResult.ticker].orderBook =
+            orderbookResult.orderbook || undefined;
         }
       }
 
       return result;
     } catch (error) {
-      console.error("Error in getAllData:", error);
-      throw error;
+      console.error("Error fetching data:", error);
+      return {};
     }
   }
 }
