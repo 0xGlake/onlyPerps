@@ -18,8 +18,7 @@ export interface OrderBook {
 
 export interface ExchangeData {
   [symbol: string]: {
-    fundingRate: string;
-    openInterest: string;
+    fundingData: FundingData;
     orderBook?: OrderBook;
   };
 }
@@ -29,6 +28,7 @@ export abstract class BaseExchange {
 
   abstract getFundingAndOI(): Promise<{ [key: string]: FundingData }>;
   abstract getOrderBook(symbol: string): Promise<OrderBook>;
+  abstract getAllData(orderbookTickers: string[]): Promise<ExchangeData>;
 
   // Retry logic wrapper
   protected async withRetry<T>(

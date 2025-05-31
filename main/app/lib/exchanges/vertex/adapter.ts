@@ -89,8 +89,10 @@ export class VertexExchange extends BaseExchange {
 
           // Combine funding/OI data with orderbook
           result[standardSymbol] = {
-            fundingRate: fundingData[standardSymbol]?.fundingRate || "0",
-            openInterest: fundingData[standardSymbol]?.openInterest || "0",
+            fundingData: {
+              fundingRate: fundingData[standardSymbol]?.fundingRate || "0",
+              openInterest: fundingData[standardSymbol]?.openInterest || "0",
+            },
             orderBook: orderbook,
           };
         } catch (error) {
@@ -98,8 +100,10 @@ export class VertexExchange extends BaseExchange {
           // Still include the ticker with funding data if available
           if (fundingData[standardSymbol]) {
             result[standardSymbol] = {
-              fundingRate: fundingData[standardSymbol].fundingRate,
-              openInterest: fundingData[standardSymbol].openInterest,
+              fundingData: {
+                fundingRate: fundingData[standardSymbol].fundingRate,
+                openInterest: fundingData[standardSymbol].openInterest,
+              },
               orderBook: {
                 bids: [],
                 asks: [],

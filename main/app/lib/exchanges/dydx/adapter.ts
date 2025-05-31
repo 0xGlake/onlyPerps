@@ -80,14 +80,14 @@ export class DydxExchange extends BaseExchange {
           try {
             const orderBook = await this.getOrderBook(ticker);
             result[ticker] = {
-              ...fundingData[ticker],
+              fundingData: fundingData[ticker],
               orderBook,
             };
           } catch (error) {
             console.warn(`Failed to get orderbook for ${ticker}:`, error);
             // Include funding data even if orderbook fails
             result[ticker] = {
-              ...fundingData[ticker],
+              fundingData: fundingData[ticker],
               orderBook: {
                 bids: [],
                 asks: [],

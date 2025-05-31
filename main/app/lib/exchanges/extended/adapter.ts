@@ -1,6 +1,7 @@
 // app/lib/exchanges/extended/adapter.ts
 import {
   BaseExchange,
+  ExchangeData,
   FundingData,
   OrderBook,
   OrderBookLevel,
@@ -65,26 +66,27 @@ export class ExtendedExchange extends BaseExchange {
     });
   }
 
-  async getAllData(orderbookTickers: string[]) {
+  async getAllData(orderbookTickers: string[]): Promise<ExchangeData> {
     const fundingData = await this.getFundingAndOI();
-    const results: any = {};
+    const results: ExchangeData = {};
 
     for (const ticker of orderbookTickers) {
       if (fundingData[ticker]) {
         try {
           const orderBook = await this.getOrderBook(ticker);
           results[ticker] = {
-            fundingRate: fundingData[ticker].fundingRate,
-            openInterest: fundingData[ticker].openInterest,
+            fundingData: {
+              fundingRate: fundingData[ticker].fundingRate,
+              openInterest: fundingData[ticker].openInterest,
+            },
             orderBook,
           };
         } catch (error) {
-          console.error(`Failed to get orderbook for ${ticker}:`, error);
-          // Include funding data even if orderbook fails
           results[ticker] = {
-            fundingRate: fundingData[ticker].fundingRate,
-            openInterest: fundingData[ticker].openInterest,
-            orderBook: null,
+            fundingData: {
+              fundingRate: fundingData[ticker].fundingRate,
+              openInterest: fundingData[ticker].openInterest,
+            },
           };
         }
       }

@@ -87,8 +87,10 @@ export class AevoExchange extends BaseExchange {
       const result: ExchangeData = {};
       for (const [symbol, data] of Object.entries(fundingData)) {
         result[symbol] = {
-          fundingRate: data.fundingRate,
-          openInterest: data.openInterest,
+          fundingData: {
+            fundingRate: data.fundingRate,
+            openInterest: data.openInterest,
+          },
         };
       }
 

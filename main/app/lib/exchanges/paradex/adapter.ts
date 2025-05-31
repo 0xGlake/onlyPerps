@@ -1,6 +1,7 @@
 // app/lib/exchanges/paradex/adapter.ts
 import {
   BaseExchange,
+  ExchangeData,
   FundingData,
   OrderBook,
   OrderBookLevel,
@@ -70,7 +71,7 @@ export class ParadexExchange extends BaseExchange {
     });
   }
 
-  async getAllData(orderbookTickers: string[]) {
+  async getAllData(orderbookTickers: string[]): Promise<ExchangeData> {
     try {
       // Get funding and OI data for all markets
       const fundingData = await this.getFundingAndOI();
@@ -92,11 +93,11 @@ export class ParadexExchange extends BaseExchange {
       const orderbookResults = await Promise.all(orderbookPromises);
 
       // Combine all data
-      const result: any = {};
+      const result: ExchangeData = {};
 
       // Add funding data
       for (const [ticker, data] of Object.entries(fundingData)) {
-        result[ticker] = { ...data };
+        result[ticker] = { fundingData: data };
       }
 
       // Add orderbook data

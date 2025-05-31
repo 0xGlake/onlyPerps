@@ -138,7 +138,9 @@ async function testExchangeCombinedData(
       if (data) {
         const hasOB = data.orderBook ? "✅" : "❌";
         console.log(
-          `  ${ticker}-USD: Funding=${data.fundingRate}, OI=${data.openInterest}, OrderBook=${hasOB}`,
+          `  ${ticker}-USD: Funding=${data.fundingData?.fundingRate}, OI=${data.fundingData?.openInterest}, OrderBook=${hasOB}`,
+          ` snapshot of orderbook: ${data.orderBook.bids[0].price} ${data.orderBook.asks[0].price}`,
+          ` Levels:  ${data.orderBook.bids.length} bids, ${data.orderBook.asks.length} asks`,
         );
       }
     }
@@ -150,10 +152,9 @@ async function testExchangeCombinedData(
           !orderbookTickers.some((t) => symbol === `${t}-USD`),
       )
       .slice(0, 5);
-
     minorAssets.forEach(([symbol, data]: [string, any]) => {
       console.log(
-        `  ${symbol}: Funding=${data.fundingRate}, OI=${data.openInterest}`,
+        `  ${symbol}: Funding=${data.fundingData?.fundingRate}, OI=${data.fundingData?.openInterest}`,
       );
     });
 

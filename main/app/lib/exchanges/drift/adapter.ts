@@ -41,7 +41,7 @@ export class DriftExchange extends BaseExchange {
       const data = await this.api.getOrderBook(marketName);
 
       const PRICE_DIVISOR = 1000000;
-      const SIZE_DIVISOR = 1000000000;
+      const SIZE_DIVISOR = 1000000;
 
       const bids: OrderBookLevel[] = data.bids
         ? data.bids.map((bid: any) => ({
@@ -88,8 +88,10 @@ export class DriftExchange extends BaseExchange {
           // Only include if we have funding data for this symbol
           if (fundingData[normalizedTicker]) {
             result[normalizedTicker] = {
-              fundingRate: fundingData[normalizedTicker].fundingRate,
-              openInterest: fundingData[normalizedTicker].openInterest,
+              fundingData: {
+                fundingRate: fundingData[normalizedTicker].fundingRate,
+                openInterest: fundingData[normalizedTicker].openInterest,
+              },
               orderBook: orderBook,
             };
           }

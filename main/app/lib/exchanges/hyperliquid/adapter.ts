@@ -1,18 +1,12 @@
 // app/lib/exchanges/hyperliquid/adapter.ts
 import {
   BaseExchange,
+  ExchangeData,
   FundingData,
   OrderBook,
   OrderBookLevel,
 } from "../base/exchange";
 import { HyperliquidAPI } from "./api";
-
-interface HyperMarket {
-  name: string;
-  funding: string;
-  openInterest: string;
-  premium: string;
-}
 
 export class HyperliquidExchange extends BaseExchange {
   name = "hyperliquid";
@@ -32,7 +26,6 @@ export class HyperliquidExchange extends BaseExchange {
 
       const result: { [key: string]: FundingData } = {};
 
-      // Get ALL assets, not just filtered tickers
       const universe = data[0].universe;
       const assetData = data[1];
 
@@ -40,15 +33,13 @@ export class HyperliquidExchange extends BaseExchange {
         const asset = universe[i];
         const associatedData = assetData[i];
 
-        result[`${asset.name}-USD`] = {
-          fundingRate: associatedData.funding,
-          openInterest: associatedData.openInterest,
-        };
+        if (associatedData.openInterest != 0) {
+          result[`${asset.name}-USD`] = {
+            fundingRate: associatedData.funding,
+            openInterest: associatedData.openInterest,
+          };
+        }
       }
-
-      console.log(
-        `Retrieved funding data for ${Object.keys(result).length} assets from Hyperliquid`,
-      );
       return result;
     });
   }
@@ -93,16 +84,15 @@ export class HyperliquidExchange extends BaseExchange {
     });
   }
 
-  // Combined method for your scheduler
-  async getAllData(orderbookTickers: string[]) {
+  async getAllData(orderbookTickers: string[]): Promise<ExchangeData> {
     try {
-      // Get ALL funding and open interest data (one API call gets everything)
+      // Get ALL funding and open interest data
       const fundingData = await this.getFundingAndOI();
 
       // Get orderbooks only for specified tickers (individual API calls)
       const orderbookPromises = orderbookTickers.map(async (ticker) => {
         try {
-          const orderbook = await this.getOrderBook(`${ticker}-USD`); // TODO: CHECK IF THIS IS PERP OR SPOT MARKET
+          const orderbook = await this.getOrderBook(`${ticker}-USD`);
           return { ticker: `${ticker}-USD`, orderbook };
         } catch (error) {
           console.error(`Error fetching orderbook for ${ticker}:`, error);
@@ -113,26 +103,23 @@ export class HyperliquidExchange extends BaseExchange {
       const orderbookResults = await Promise.all(orderbookPromises);
 
       // Combine funding + orderbook data
-      const result: { [key: string]: any } = {};
+      const result: ExchangeData = {};
 
       // Add ALL funding data
       for (const [symbol, funding] of Object.entries(fundingData)) {
         result[symbol] = {
-          ...funding,
-          orderBook: null, // Default to no orderbook
+          fundingData: funding,
         };
       }
 
       // Add orderbooks for the specific tickers
       for (const orderbookResult of orderbookResults) {
         if (result[orderbookResult.ticker]) {
-          result[orderbookResult.ticker].orderBook = orderbookResult.orderbook;
+          result[orderbookResult.ticker].orderBook =
+            orderbookResult.orderbook || undefined;
         }
       }
 
-      console.log(
-        `Combined data: ${Object.keys(fundingData).length} funding rates, ${orderbookResults.filter((r) => r.orderbook).length} orderbooks`,
-      );
       return result;
     } catch (error) {
       console.error("Error fetching Hyperliquid data:", error);
