@@ -44,13 +44,11 @@ export class DydxExchange extends BaseExchange {
       const bids: OrderBookLevel[] = (data.bids || []).map((level: any) => ({
         price: level.price,
         size: level.size,
-        count: 1, // dydx doesn't provide count, default to 1
       }));
 
       const asks: OrderBookLevel[] = (data.asks || []).map((level: any) => ({
         price: level.price,
         size: level.size,
-        count: 1, // dydx doesn't provide count, default to 1
       }));
 
       return {

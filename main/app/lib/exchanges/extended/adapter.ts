@@ -51,14 +51,12 @@ export class ExtendedExchange extends BaseExchange {
           (level: any): OrderBookLevel => ({
             price: level.price,
             size: level.qty,
-            count: 1, // Extended API doesn't provide count, so we default to 1
           }),
         ),
         asks: data.ask.map(
           (level: any): OrderBookLevel => ({
             price: level.price,
             size: level.qty,
-            count: 1, // Extended API doesn't provide count, so we default to 1
           }),
         ),
         timestamp: Date.now(), // Extended API doesn't provide timestamp in orderbook

@@ -139,7 +139,7 @@ async function testExchangeCombinedData(
         const hasOB = data.orderBook ? "✅" : "❌";
         console.log(
           `  ${ticker}-USD: Funding=${data.fundingData?.fundingRate}, OI=${data.fundingData?.openInterest}, OrderBook=${hasOB}`,
-          ` snapshot of orderbook: ${data.orderBook.bids[0].price} ${data.orderBook.asks[0].price}`,
+          ` Snapshot of orderbook: ${data.orderBook.bids[0].price} ${data.orderBook.asks[0].price}`,
           ` Levels:  ${data.orderBook.bids.length} bids, ${data.orderBook.asks.length} asks`,
         );
       }

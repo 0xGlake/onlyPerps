@@ -60,7 +60,6 @@ export class ParadexExchange extends BaseExchange {
       const transformLevel = (level: any[]): OrderBookLevel => ({
         price: level[0],
         size: level[1],
-        count: 1, // Paradex doesn't provide order count, default to 1
       });
 
       return {

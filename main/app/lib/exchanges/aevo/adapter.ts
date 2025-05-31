@@ -59,13 +59,11 @@ export class AevoExchange extends BaseExchange {
       const bids: OrderBookLevel[] = data.bids.map((level: string[]) => ({
         price: level[0],
         size: level[1],
-        count: 1, // Aevo doesn't provide count, so we default to 1
       }));
 
       const asks: OrderBookLevel[] = data.asks.map((level: string[]) => ({
         price: level[0],
         size: level[1],
-        count: 1, // Aevo doesn't provide count, so we default to 1
       }));
 
       return {

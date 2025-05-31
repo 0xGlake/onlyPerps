@@ -7,7 +7,6 @@ export interface FundingData {
 export interface OrderBookLevel {
   price: string;
   size: string;
-  count?: number;
 }
 
 export interface OrderBook {

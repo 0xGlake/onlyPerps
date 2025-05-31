@@ -55,14 +55,12 @@ export class VertexExchange extends BaseExchange {
           (level: [number, number]): OrderBookLevel => ({
             price: level[0].toString(),
             size: level[1].toString(),
-            count: 1,
           }),
         ),
         asks: data.asks.map(
           (level: [number, number]): OrderBookLevel => ({
             price: level[0].toString(),
             size: level[1].toString(),
-            count: 1,
           }),
         ),
         timestamp: data.timestamp || Date.now(),

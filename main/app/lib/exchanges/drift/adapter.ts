@@ -47,7 +47,6 @@ export class DriftExchange extends BaseExchange {
         ? data.bids.map((bid: any) => ({
             price: (parseFloat(bid.price) / PRICE_DIVISOR).toString(),
             size: (parseFloat(bid.size) / SIZE_DIVISOR).toString(),
-            count: 1,
           }))
         : [];
 
@@ -55,7 +54,6 @@ export class DriftExchange extends BaseExchange {
         ? data.asks.map((ask: any) => ({
             price: (parseFloat(ask.price) / PRICE_DIVISOR).toString(),
             size: (parseFloat(ask.size) / SIZE_DIVISOR).toString(),
-            count: 1,
           }))
         : [];
 

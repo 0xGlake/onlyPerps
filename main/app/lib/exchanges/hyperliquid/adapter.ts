@@ -69,14 +69,12 @@ export class HyperliquidExchange extends BaseExchange {
           (level: any): OrderBookLevel => ({
             price: level.px,
             size: level.sz,
-            count: level.n,
           }),
         ),
         asks: asks.map(
           (level: any): OrderBookLevel => ({
             price: level.px,
             size: level.sz,
-            count: level.n,
           }),
         ),
         timestamp: data.time || Date.now(),
