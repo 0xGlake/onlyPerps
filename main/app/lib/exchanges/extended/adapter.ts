@@ -65,31 +65,47 @@ export class ExtendedExchange extends BaseExchange {
   }
 
   async getAllData(orderbookTickers: string[]): Promise<ExchangeData> {
-    const fundingData = await this.getFundingAndOI();
-    const results: ExchangeData = {};
+    try {
+      // Get ALL funding and open interest data
+      const fundingData = await this.getFundingAndOI();
 
-    for (const ticker of orderbookTickers) {
-      if (fundingData[ticker]) {
+      // Get orderbooks only for specified tickers (individual API calls)
+      const orderbookPromises = orderbookTickers.map(async (ticker) => {
         try {
-          const orderBook = await this.getOrderBook(ticker);
-          results[ticker] = {
-            fundingData: {
-              fundingRate: fundingData[ticker].fundingRate,
-              openInterest: fundingData[ticker].openInterest,
-            },
-            orderBook,
-          };
+          // Normalize ticker if needed (adjust this based on your exchange's format)
+          const normalizedTicker = ticker; // or `${ticker}-USD` or other normalization
+          const orderbook = await this.getOrderBook(normalizedTicker);
+          return { ticker: normalizedTicker, orderbook };
         } catch (error) {
-          results[ticker] = {
-            fundingData: {
-              fundingRate: fundingData[ticker].fundingRate,
-              openInterest: fundingData[ticker].openInterest,
-            },
-          };
+          console.error(`Error fetching orderbook for ${ticker}:`, error);
+          return { ticker: ticker, orderbook: null };
+        }
+      });
+
+      const orderbookResults = await Promise.all(orderbookPromises);
+
+      // Combine funding + orderbook data
+      const result: ExchangeData = {};
+
+      // Add ALL funding data
+      for (const [symbol, funding] of Object.entries(fundingData)) {
+        result[symbol] = {
+          fundingData: funding,
+        };
+      }
+
+      // Add orderbooks for the specific tickers
+      for (const orderbookResult of orderbookResults) {
+        if (result[orderbookResult.ticker]) {
+          result[orderbookResult.ticker].orderBook =
+            orderbookResult.orderbook || undefined;
         }
       }
-    }
 
-    return results;
+      return result;
+    } catch (error) {
+      console.error("Error fetching exchange data:", error);
+      return {};
+    }
   }
 }

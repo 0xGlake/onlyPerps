@@ -96,7 +96,6 @@ export class AevoExchange extends BaseExchange {
       const orderBookPromises = orderbookTickers.map(async (ticker) => {
         try {
           // The ticker might be just "ETH" or "ETH-USD"
-          // We need to ensure we use the right format for the result key
           const resultKey = ticker.includes("-USD") ? ticker : `${ticker}-USD`;
           const orderBook = await this.getOrderBook(ticker);
           return { ticker: resultKey, orderBook };
