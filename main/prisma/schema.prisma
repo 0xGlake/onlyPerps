@@ -14,93 +14,27 @@ datasource db {
   url      = env("CONNECTION_STRING_REALTIME")
 }
 
-
-// Main table for exchange data - optimized for latest entry queries
-model ExchangeData {
+// One row per exchange per timestamp
+model ExchangeSnapshot {
   id           String   @id @default(cuid())
-  exchange     String   // e.g., "hyperliquid", "dydx"
-  symbol       String   // e.g., "BTC-PERP", "ETH-PERP"
-
-  // Funding data
-  fundingRate  Decimal  @db.Decimal(30, 18)
-  openInterest Decimal  @db.Decimal(30, 18)
-
-  // Order book snapshot (optional)
-  orderBook    Json?    // Store full orderbook as JSON for flexibility
-
-  // Timestamps
+  exchange     String
+  // JSON array of all symbols with their data
+  data         Json     // Array of {symbol, fundingRate, openInterest, orderBook?}
   timestamp    DateTime @default(now())
-  createdAt    DateTime @default(now())
 
-  // Composite index for ultra-fast latest entry queries
-  @@index([exchange, symbol, timestamp(sort: Desc)])
-  // Index for time-based queries
+  // Primary index for time series queries
   @@index([timestamp(sort: Desc)])
-  // Index for exchange-specific queries
+  // Secondary for filtering by exchange if needed
   @@index([exchange, timestamp(sort: Desc)])
 }
 
-// Aggregated view for latest data per exchange/symbol (optional optimization)
-model LatestExchangeData {
-  id           String   @id @default(cuid())
-  exchange     String
-  symbol       String
-
-  fundingRate  Decimal  @db.Decimal(30, 18)
-  openInterest Decimal  @db.Decimal(30, 18)
-  orderBook    Json?
-
-  timestamp    DateTime
-  updatedAt    DateTime @updatedAt
-
-  // Unique constraint ensures only one latest entry per exchange/symbol
-  @@unique([exchange, symbol])
-  // Index for fast lookups
-  @@index([exchange])
-  @@index([symbol])
-}
-
-// Optional: Separate order book table if you need more structured queries
-model OrderBook {
-  id           String   @id @default(cuid())
-  exchangeDataId String
-
-  // Store as JSON arrays for flexibility
-  bids         Json     // Array of {price: string, size: string}
-  asks         Json     // Array of {price: string, size: string}
-
-  timestamp    BigInt   // Store as BigInt for precision
-
-  // Relation to main data
-  exchangeData ExchangeData @relation(fields: [exchangeDataId], references: [id], onDelete: Cascade)
-
-  @@index([exchangeDataId])
-}
-
-// Optional: Historical funding rates for analysis
-model FundingRateHistory {
-  id           String   @id @default(cuid())
-  exchange     String
-  symbol       String
-
-  fundingRate  Decimal  @db.Decimal(30, 18)
-  timestamp    DateTime
-
-  // Optimized for time-series queries
-  @@index([exchange, symbol, timestamp(sort: Desc)])
-  @@index([timestamp(sort: Desc)])
-}
-
-// System metadata for tracking collection health
-model CollectionStatus {
+// One row per exchange - super fast latest data lookup
+model LatestData {
   id           String   @id @default(cuid())
   exchange     String   @unique
-
-  lastSuccessfulRun DateTime?
-  lastError         String?
-  consecutiveErrors Int      @default(0)
-  isActive          Boolean  @default(true)
-
-  createdAt    DateTime @default(now())
+  data         Json     // Same structure as above
+  timestamp    DateTime
   updatedAt    DateTime @updatedAt
+
+  @@index([timestamp(sort: Desc)])
 }
